@@ -236,10 +236,6 @@ pool.getConnection(function (err, connection) {
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.post) {
-            connection.query('SELECT * FROM posts WHERE pid = ? AND pisDeleted = 1',
-                [data.post],
-                function (err, ans) {
-                    if (!err) {
                         connection.query(`UPDATE posts SET pisDeleted = 0 WHERE  pid = ?`, [data.post], function (err, ans) {
                             if (!err) {
                                 res.send(PostRemoveOut({post: data.post}));
@@ -249,12 +245,6 @@ pool.getConnection(function (err, connection) {
                                 console.log(err);
                             }
                         });
-                    }
-                    else {
-                        console.log('err 180135');
-                    }
-                });
-
         }
         else {
             console.log(ErrorOut(4));

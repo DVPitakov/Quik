@@ -9,105 +9,10 @@ function relatedOrder(related, enable) {
     }
     return related.every(el => {
         var counter = 0;
-        enable.forEach(sm => {if (sm == el) counter++;});
+        enable.forEach(sm => {
+            if (sm == el) counter++;
+        });
         return counter == 1;
-    });
-}
-
-function showDetails(target, id, connection, callback, related) {
-    var rows = '';
-    var from = '';
-    var where = '';
-    var msgFormat;
-    if (target == "user") {
-        from = "users";
-        rows = userRows;
-        where = "(uemail = ?)";
-        msgFormat = UserDetailsOut;
-        if (related[0] != null) {
-            return callback(ErrorOut(4));
-        }
-    }
-    else if (target == "forum") {
-        from = "forums";
-        rows = forumRows;
-        where = "(fshort_name = ?)";
-        msgFormat = ForumDetailsOut;
-        if (related[0] != null) {
-            if (related[0] == 'user') {
-                where += " && (fuser = uemail)";
-                rows += ", " + userRows;
-            }
-            else {
-                return callback(ErrOut(4));
-            }
-        }
-    }
-    else if (target == "thread") {
-        from = "threads";
-        rows = threadRows;
-        where = "(tid = ?)";
-        msgFormat = ThreadDetailsOut;
-        if (relatedOrder(related, ['user', 'forum'])) {
-            if (related.indexOf('user') >= 0) {
-                where += " && (tuser = uemail)"
-                rows += ", " + userRows;
-            }
-            if (related.indexOf('forum') >= 0) {
-                where += " && (tforum = fshort_name)"
-                rows += ", " + forumRows;
-            }
-        }
-        else {
-            return callback(ErrOut(4));
-        }
-    }
-    else if (target == 'post') {
-        from = "posts";
-        rows = postRows;
-        where = "(pid = ?)";
-        msgFormat = PostDetailsOut;
-        if (relatedOrder(related, ['user', 'forum', 'thread'])) {
-            if (related.indexOf('user') >= 0) {
-                where += " && (tuser = uemail)";
-                rows += ", " + userRows;
-            }
-            if (related.indexOf('forum') >= 0) {
-                where += " && (tforum = fshort_name)";
-                rows += ", " + forumRows;
-            }
-            if (related.indexOf('thread') >= 0) {
-                where += " && (pthread = tid)";
-                rows += ", " + forumRows;
-            }
-        }
-        else {
-            return callback(ErrOut(4));
-        }
-    }
-    var sql = 'SELECT ' + rows + ' FROM ' + from + ' WHERE ' + where + ';';
-    connection.query(sql, [id], function(err, ans){
-        if(!err) {
-            if(ans[0] != null) {
-                var out = msgFormat(ans[0]);
-                if (related.indexOf('user') >= 0) {
-                    out.user = UserDetailsOut(ans[0]).response;
-                }
-                if (related.indexOf('forum') >= 0) {
-                    out.forum = ForumDetailsOut(ans[0]).response;
-                }
-                if (related.indexOf('thread') >= 0) {
-                    out.thread = ThreadDetailsOut(ans[0]).response;
-                }
-                callback(out);
-            }
-            else {
-                callback(ErrorOut(4));
-            }
-        }
-        else {
-            console.log('err 042300');
-        }
     });
 }
 
@@ -160,9 +65,6 @@ function ShowThread(thread, connection, callback, related) {
         if (withUser) counter++;
         var withForum = find(related, 'forum');
         if (withForum) counter++;
-
-
-
     }
     var sql = `SELECT *, DATE_FORMAT(tdate, '%Y-%m-%d %H:%i:%s') AS date FROM threads`;
     if (withUser) sql += `, users`;
@@ -174,10 +76,10 @@ function ShowThread(thread, connection, callback, related) {
         [thread],
         function (err, ans) {
             if (!err) {
-                if(null != ans[0]) {
+                if (null != ans[0]) {
                     ans[0].tdate = ans[0].date;
                     var curThread = ans[0];
-                    if (null !=ans[0]) {
+                    if (null != ans[0]) {
                         ans[0].tdate = ans[0].date;
                         if (withUser) {
                             ans[0].tuser = UserDetailsOut(ans[0]).response;
@@ -203,7 +105,7 @@ function ShowThread(thread, connection, callback, related) {
 }
 function ShowPost(post, connection, callback, related) {
     var counter = 0;
-    if (null !=related) {
+    if (null != related) {
         var withUser = find(related, 'user');
         if (withUser) counter++;
         var withThread = find(related, 'thread');
@@ -212,7 +114,7 @@ function ShowPost(post, connection, callback, related) {
         if (withForum) counter++;
     }
     var sql = `SELECT *`;
-    if(withThread) sql += `, DATE_FORMAT(tdate, '%Y-%m-%d %H:%i:%s') AS ttdate`;
+    if (withThread) sql += `, DATE_FORMAT(tdate, '%Y-%m-%d %H:%i:%s') AS ttdate`;
     sql += `, DATE_FORMAT(pdate, '%Y-%m-%d %H:%i:%s') AS ppdate FROM posts`;
     if (withUser) sql += `, users`;
     if (withThread) sql += `, threads`;
@@ -223,7 +125,7 @@ function ShowPost(post, connection, callback, related) {
     if (withForum) sql += ` AND (forums.fshort_name = posts.pforum)`;
     connection.query(sql, [post], function (err, ans) {
         if (!err) {
-            if (null !=ans[0]) {
+            if (null != ans[0]) {
                 ans[0].tdate = ans[0].ttdate;
                 ans[0].pdate = ans[0].ppdate;
                 if (withUser) {
@@ -248,48 +150,35 @@ function ShowPost(post, connection, callback, related) {
 }
 
 function ShowUser(email, connection, callback) {
-    connection.query('SELECT * FROM users WHERE users.uemail = ?', [email], function (err, ans) {
-        if (!err) {
-            var curUser = ans[0];
-            if (null != curUser) {
-                connection.query('SELECT * FROM followers, users WHERE (firstUser = ?) AND secondUser = users.uemail', [email], function (err, ans) {
-                    if (err) {
-                        console.log("err 180138");
-                        return callback(ErrorOut(4));
-                    }
-                    curUser.followers = ans.map(el => {
+    connection.query(
+        'SELECT * FROM users WHERE users.uemail = ?;' +
+        'SELECT * FROM followers INNER JOIN users ON secondUser = users.uemail WHERE (firstUser = ?);' +
+        'SELECT * FROM followers, users WHERE (firstUser = users.uemail) AND secondUser = ?;' +
+        'SELECT sthread FROM subscriptions WHERE suser = ?;'
+        , [email, email, email, email], function (err, ans) {
+            if (!err) {
+                var curUser = ans[0][0];
+                if (null != curUser) {
+                    curUser.followers = ans[1].map(el => {
                         return el.secondUser;
                     });
-                    connection.query('SELECT * FROM followers, users WHERE (firstUser = users.uemail) AND secondUser = ?', [email], function (err, ans) {
-                        if (err) {
-                            console.log('err 082237');
-                            return callback(ErrorOut(4));
-                        }
-                        curUser.following = ans.map(el => {
-                            return el.firstUser;
-                        });
-                        connection.query('SELECT sthread FROM subscriptions WHERE suser = ?', [email], function(err, ans){
-                            if(err) {
-                                console.log('err 082231');
-                                return callback(ErrorOut(4));
-                            }
-                            curUser.subscriptions = ans.map(el => {
-                                return el.sthread;
-                            });
-                            return callback(UserDetailsOut(curUser));
-                            });
-                        });
-                });
+                    curUser.following = ans[2].map(el => {
+                        return el.firstUser;
+                    });
+                    curUser.subscriptions = ans[3].map(el => {
+                        return el.sthread;
+                    });
+                    return callback(UserDetailsOut(curUser));
+                }
+                else {
+                    return callback(ErrorOut(3));
+                }
             }
             else {
-                return callback(ErrorOut(3));
+                console.log("err 180133");
             }
-        }
-        else {
-            console.log("err 180133");
-        }
 
-    });
+        });
 
 }
 
@@ -312,8 +201,8 @@ function ShowForum(forum, connection, callback, related) {
     if (withUser) sql += ` AND (users.uemail = forums.fuser)`;
     connection.query(sql, [forum], function (err, ans) {
         if (!err) {
-            if (null !=ans[0]) {
-                if(withUser) ans[0].fuser = UserDetailsOut(ans[0]).response;
+            if (null != ans[0]) {
+                if (withUser) ans[0].fuser = UserDetailsOut(ans[0]).response;
                 callback(ForumDetailsOut(ans[0]));
             }
             else {
