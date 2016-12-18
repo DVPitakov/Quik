@@ -1059,8 +1059,7 @@ pool.getConnection(function (err, connection) {
                             response: outMas
                         };
                         res.send(out)
-                    })
-                    ;
+                    });
                 }
                 else {
                     console.log("err 181845");
