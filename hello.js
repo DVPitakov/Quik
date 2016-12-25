@@ -8,7 +8,7 @@ var pool = mysql.createPool({
     acquireTimeout: 1000,
     multipleStatements: true,
     host: 'localhost',
-    user: 'dmitry',
+    user: 'root',
     password: 'admin',
     charset: 'UTF8_GENERAL_CI'
 });
