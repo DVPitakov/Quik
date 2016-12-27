@@ -1,0 +1,197 @@
+CREATE TABLE users
+(
+uid INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+uusername CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
+uabout TEXT CHARACTER SET utf8 COLLATE utf8_general_ci,
+uname CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
+uemail CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL UNIQUE,
+uisAnonymous BOOL DEFAULT false,
+usubscription_id INT
+);
+
+CREATE TABLE forums
+(
+fid INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+fname CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci UNIQUE NOT NULL,
+fshort_name CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci UNIQUE NOT NULL,
+fuser CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+FOREIGN KEY (fuser) REFERENCES users(uemail) ON DELETE CASCADE
+);
+CREATE TABLE threads
+(
+tid INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+tdate DATETIME NOT NULL,
+tforum CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+tisClosed BOOL NOT NULL,
+tisDeleted BOOL DEFAULT false,
+tmessage TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+tslug TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+ttitle TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+tuser CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+tlikes INT DEFAULT 0,
+tdislikes INT DEFAULT 0,
+tpoints INT DEFAULT 0,
+tposts INT DEFAULT 0,
+FOREIGN KEY (tuser) REFERENCES users(uemail) ON DELETE CASCADE,
+FOREIGN KEY (tforum) REFERENCES forums(fshort_name) ON DELETE CASCADE
+);
+CREATE TABLE posts
+(
+pparent INT(6),
+pisApproved BOOL DEFAULT false,
+pisHighlighted BOOL DEFAULT false,
+pisEdited BOOL DEFAULT false,
+pisSpam BOOL DEFAULT false,
+pisDeleted BOOL DEFAULT false,
+
+pid INT(6) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+pdate DATETIME NOT NULL,
+pthread INT NOT NULL,
+pmessage TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+puser CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+pforum CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+plikes INT NOT NULL DEFAULT 0,
+pdislikes INT NOT NULL DEFAULT 0,
+ppoints INT NOT NULL DEFAULT 0,
+ppath CHAR(255) DEFAULT "",
+FOREIGN KEY (puser) REFERENCES users(uemail) ON DELETE CASCADE,
+FOREIGN KEY (pthread) REFERENCES threads(tid) ON DELETE CASCADE,
+FOREIGN KEY (pforum) REFERENCES forums(fshort_name) ON DELETE CASCADE
+);
+CREATE INDEX pdate ON posts(pdate);
+CREATE TABLE subscriptions
+(
+ sid INT(6) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ suser CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
+ sthread INT NOT NULL,
+ FOREIGN KEY (suser) REFERENCES users(uemail) ON DELETE CASCADE,
+ FOREIGN KEY (sthread) REFERENCES threads(tid) ON DELETE CASCADE
+);
+CREATE TABLE followers
+(
+id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+firstUser CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+secondUser CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+FOREIGN KEY (firstUser) REFERENCES users(uemail) ON DELETE CASCADE,
+FOREIGN KEY (secondUser) REFERENCES users(uemail) ON DELETE CASCADE
+);
+CREATE INDEX firstUser ON followers(firstUser);
+CREATE INDEX secondUser ON followers(secondUser);
+
+CREATE TABLE tree
+(
+id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+postid INT NOT NULL,
+postpath CHAR(100) NOT NULL,
+ipath CHAR(100)
+);
+CREATE INDEX suser ON subscriptions(suser);
+CREATE INDEX postid ON tree(postid);
+CREATE INDEX postpath ON tree(postpath);
+DELIMITER //
+CREATE TRIGGER posts_insert AFTER INSERT ON posts
+FOR EACH ROW
+BEGIN
+ DECLARE str CHAR(100);
+ DECLARE istr CHAR(100);
+ IF NEW.pparent IS NULL THEN
+  SET str = LPAD(NEW.pid,8,0);
+  SET istr = LPAD(99999999 - NEW.pid,8,9);
+ ELSE 
+  SET str = (SELECT postpath FROM tree WHERE postid = NEW.pparent);
+  SET str = CONCAT(str, LPAD(NEW.pid,8,0));
+  SET istr = (SELECT ipath FROM tree WHERE postid = NEW.pparent);
+  SET istr = CONCAT(istr, LPAD(NEW.pid,8,0));
+ END IF;
+ INSERT INTO tree (postid, postpath, ipath) VALUES (NEW.pid,str, istr);
+ UPDATE threads SET tposts = tposts + 1 WHERE tid = NEW.pthread;
+	
+END//
+
+
+
+DELIMITER //
+CREATE TRIGGER threads_posts_update AFTER UPDATE ON posts
+FOR EACH ROW
+BEGIN
+IF OLD.pisDeleted = 0 AND NEW.pisDeleted = 1 THEN
+ UPDATE threads SET tposts = tposts - 1 WHERE tid = NEW.pthread;
+ELSEIF OLD.pisDeleted = 1 AND NEW.pisDeleted = 0 THEN
+ UPDATE threads SET tposts = tposts + 1 WHERE tid = NEW.pthread;
+END IF;
+END//
+       
+DELIMITER //
+CREATE PROCEDURE votePost (IN post INT,IN vote BOOL)
+BEGIN
+ IF vote THEN
+ UPDATE posts SET plikes = plikes + 1, ppoints = ppoints + 1 WHERE posts.pid = post; 
+ ELSE
+  UPDATE posts SET pdislikes = pdislikes + 1, ppoints = ppoints - 1 WHERE posts.pid = post; 
+ END IF;
+  SELECT pparent, pisApproved, pisHighlighted, pisEdited, pisSpam, pisDeleted, pid, DATE_FORMAT(pdate, '%Y-%m-%d %H:%i:%s') AS pdate, pthread, pmessage, puser, pforum, plikes, pdislikes, ppoints
+  FROM posts WHERE pid = post;
+END//
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE voteThread (IN thread INT,IN vote BOOL)
+BEGIN
+ IF vote THEN
+  UPDATE threads SET tlikes = tlikes + 1, tpoints = tpoints + 1 WHERE tid = thread; 
+ ELSE
+ UPDATE threads SET tdislikes = tdislikes + 1, tpoints = tpoints - 1 WHERE tid = thread; 
+ END IF;
+  SELECT tid, DATE_FORMAT(tdate, '%Y-%m-%d %H:%i:%s') AS tdate, tforum, tisClosed, tisDeleted, tmessage, tslug, ttitle, tuser, tlikes, tdislikes, tpoints
+  FROM threads WHERE tid = thread;
+END//
+
+DELIMITER //
+
+
+set-variable = innodb_buffer_pool_size= 512M 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DELIMITER //
+CREATE TRIGGER threads_update AFTER UPDATE ON threads
+FOR EACH ROW
+BEGIN
+  IF OLD.tisDeleted = 0 AND NEW.tisDeleted = 1 THEN
+    UPDATE posts SET pisDeleted = 1 WHERE pthread = NEW.tid;
+  END IF;
+END//
+
+
