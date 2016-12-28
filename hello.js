@@ -985,7 +985,7 @@ pool.getConnection(function (err, connection) {
                     res.send(ErrorOut(5));
                 }
                 else {
-                    var select = 'SELECT * FROM users WHERE uemail = ?';
+                    var select = 'SELECT * FROM users WHERE uemail = ? LIMIT 1';
                     connection.query(select, [data.email], function (err, ans2) {
                         if (!err) {
                             res.send(UserCrateOut(ans2[0]));
@@ -1151,11 +1151,11 @@ pool.getConnection(function (err, connection) {
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.follower && null != data.followee) {
-            connection.query('SELECT * FROM users AS first, users AS second WHERE (first.uemail = ?) AND (second.uemail = ?)',
+            connection.query('SELECT * FROM users AS first, users AS second WHERE (first.uemail = ?) AND (second.uemail = ?) LIMIT 1',
                 [data.followee, data.follower],
                 function (err, ans) {
                     if (!err) {
-                        connection.query("DELETE FROM followers WHERE  firstUser = ? AND secondUser =  ?;"
+                        connection.query("DELETE FROM followers WHERE  firstUser = ? AND secondUser =  ? LIMIT 1;"
                             , [data.followee, data.follower], function (err, ans) {
                                 if (!err) {
                                     ShowUser(data.follower, connection, function (out) {
@@ -1185,11 +1185,11 @@ pool.getConnection(function (err, connection) {
         var data = req.body;
 
         if (null != data.about && null != data.user && null != data.name) {
-            connection.query(`SELECT * FROM users WHERE (uemail = ?)`,
+            connection.query(`SELECT * FROM users WHERE (uemail = ?) LIMIT 1`,
                 [data.user],
                 function (err, ans) {
                     if (!err) {
-                        connection.query('UPDATE users SET uname = ?, uabout = ? WHERE users.uemail = ?'
+                        connection.query('UPDATE users SET uname = ?, uabout = ? WHERE users.uemail = ? LIMIT 1'
                             , [data.name, data.about, data.user]
                             , function (err, ans) {
                                 if (!err) {
