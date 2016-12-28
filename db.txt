@@ -45,12 +45,13 @@ FOREIGN KEY (tforum_id) REFERENCES forums(fid) ON DELETE CASCADE
 
 CREATE TABLE posts
 (
+pparent INT(8),
 pisApproved BOOL DEFAULT false,
 pisHighlighted BOOL DEFAULT false,
 pisEdited BOOL DEFAULT false,
 pisSpam BOOL DEFAULT false,
 pisDeleted BOOL DEFAULT false,
-pid INT(6) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+pid INT(8) NOT NULL AUTO_INCREMENT PRIMARY KEY,
 pdate DATETIME NOT NULL,
 pthread INT NOT NULL,
 pmessage TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
@@ -61,8 +62,6 @@ pdislikes INT NOT NULL DEFAULT 0,
 ppoints INT NOT NULL DEFAULT 0,
 puser_id INT NOT NULL,
 pforum_id INT NOT NULL,
-postpath CHAR(100) NOT NULL,
-ipath CHAR(100) NOT NULL,
 FOREIGN KEY (puser) REFERENCES users(uemail) ON DELETE CASCADE,
 FOREIGN KEY (puser_id) REFERENCES users(uid) ON DELETE CASCADE,
 FOREIGN KEY (pthread) REFERENCES threads(tid) ON DELETE CASCADE,
@@ -87,8 +86,6 @@ firstUser CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
 secondUser CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
 firstUser_id INT NOT NULL,
 secondUser_id INT NOT NULL,
-FOREIGN KEY (firstUser_id) REFERENCES users(uid) ON DELETE CASCADE,
-FOREIGN KEY (secondUser_id) REFERENCES users(uid) ON DELETE CASCADE,
 FOREIGN KEY (firstUser) REFERENCES users(uemail) ON DELETE CASCADE,
 FOREIGN KEY (secondUser) REFERENCES users(uemail) ON DELETE CASCADE
 );
@@ -144,7 +141,7 @@ END//
 
 
 DELIMITER //
-CREATE TRIGGER posts_insert BEFORE INSERT ON posts
+CREATE TRIGGER posts_insert AFTER INSERT ON posts
 FOR EACH ROW
 BEGIN
  DECLARE str CHAR(100);
@@ -160,7 +157,7 @@ BEGIN
  END IF;
  INSERT INTO tree (postid, postpath, ipath) VALUES (NEW.pid,str, istr);
  UPDATE threads SET tposts = tposts + 1 WHERE tid = NEW.pthread;
-	
+
 END//
 
 
@@ -202,9 +199,6 @@ BEGIN
   SELECT tid, DATE_FORMAT(tdate, '%Y-%m-%d %H:%i:%s') AS tdate, tforum, tisClosed, tisDeleted, tmessage, tslug, ttitle, tuser, tlikes, tdislikes, tpoints
   FROM threads WHERE tid = thread;
 END//
-
-DELIMITER //
-
 
 set-variable = innodb_buffer_pool_size= 512M 
 
