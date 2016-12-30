@@ -127,10 +127,11 @@ pool.getConnection(function (err, connection) {
         });
     });
 
+    //DELETE FROM tree;
     app.post('/db/api/clear/', function (req, res) {
         res.set('Content-Type', 'application/json; charset=utf-8');
         connection.query(
- `DELETE FROM followers; DELETE FROM tree; 
+            `DELETE FROM followers; 
  DELETE FROM posts; DELETE FROM threads; 
  DELETE FROM forums; DELETE FROM users;
  DELETE FROM subscriptions;`
@@ -146,26 +147,19 @@ pool.getConnection(function (err, connection) {
 
 //POST
 
+    var counter = 0;
     app.post('/db/api/post/create/', function (req, res) {
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.date && null != data.thread && null != data.message && null != data.user && null != data.forum) {
-            connection.query('INSERT INTO posts (pparent, pisApproved, pisHighlighted, pisEdited, pisSpam, pisDeleted, pdate, pthread, pmessage, puser, pforum) VALUES (?,?,?,?,?,?,?,?,?,?,?);',
+            connection.query('CALL posts_insert_before(?,?,?,?,?,?,?,?,?,?,?);',
                 [data.parent, data.isApproved || false, data.isHighlighted || false, data.isEdited || false, data.isSpam || false, data.isDeleted || false, data.date, data.thread, data.message, data.user, data.forum],
                 function (err, ans) {
                     if (!err) {
-                        var query = connection.query(`SELECT *, DATE_FORMAT(pdate, '%Y-%m-%d %H:%i:%s') AS date FROM posts WHERE posts.pid = ?`, [ans.insertId], function (err, ans2) {
-                            if (!err) {
-                                res.send(JSON.stringify(PostsCreateOut(ans2[0])));
-                            }
-                            else {
-                                console.log("err 181804");
-                                console.log(ErrorOut(4));
-                                res.send(ErrorOut(4));
-                            }
-                        });
+                        res.send(JSON.stringify(PostsCreateOut(ans[0][0])));
                     }
                     else {
+                        console.log(err);
                         res.send(ErrorOut(5));
                     }
                 });
@@ -193,7 +187,7 @@ pool.getConnection(function (err, connection) {
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.post && null != data.message) {
-            connection.query('UPDATE posts SET pmessage = ? WHERE pid = ?',
+            connection.query('UPDATE posts SET pmessage = ? WHERE pid = ? LIMIT 1',
                 [data.message, data.post],
                 function (err, ans) {
                     if (!err) {
@@ -216,7 +210,7 @@ pool.getConnection(function (err, connection) {
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.post) {
-            connection.query(`UPDATE posts SET pisDeleted = 1 WHERE  pid = ?`, [data.post], function (err, ans) {
+            connection.query(`UPDATE posts SET pisDeleted = 1 WHERE  pid = ? LIMIT 1`, [data.post], function (err, ans) {
                 if (!err) {
                     res.send(PostRemoveOut({post: data.post}));
                 }
@@ -236,15 +230,15 @@ pool.getConnection(function (err, connection) {
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.post) {
-                        connection.query(`UPDATE posts SET pisDeleted = 0 WHERE  pid = ?`, [data.post], function (err, ans) {
-                            if (!err) {
-                                res.send(PostRemoveOut({post: data.post}));
-                            }
-                            else {
-                                console.log('err 051603');
-                                console.log(err);
-                            }
-                        });
+            connection.query(`UPDATE posts SET pisDeleted = 0 WHERE  pid = ? LIMIT 1`, [data.post], function (err, ans) {
+                if (!err) {
+                    res.send(PostRemoveOut({post: data.post}));
+                }
+                else {
+                    console.log('err 051603');
+                    console.log(err);
+                }
+            });
         }
         else {
             console.log(ErrorOut(4));
@@ -256,35 +250,27 @@ pool.getConnection(function (err, connection) {
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.post && null != data.vote) {
-            connection.query('SELECT * FROM posts WHERE pid = ? AND pisDeleted = 1',
-                [data.post],
-                function (err, ans) {
-                    if (!err) {
-                        if (data.vote == 1) {
-                            sql = `CALL votePost(?, 1)`
-                        }
-                        else if (data.vote == -1) {
-                            sql = `CALL votePost(?, 0)`
-                        }
-                        else {
-                            return res.send(ErrorOut(3));
-                        }
-                        connection.query(sql, [data.post], function (err, ans) {
-                            if (!err) {
-                                res.send(PostDetailsOut(ans[0]));
-                            }
-                            else {
-                                console.log('err 051708');
-                                console.log(err);
-                            }
-                        });
-                    }
-                    else {
-                        console.log('err 051709');
-                    }
-                });
-
+            if (data.vote == 1) {
+                sql = `CALL votePost(?, 1)`
+            }
+            else if (data.vote == -1) {
+                sql = `CALL votePost(?, 0)`
+            }
+            else {
+                return res.send(ErrorOut(3));
+            }
+            connection.query(sql, [data.post], function (err, ans) {
+                if (!err) {
+                    res.send(PostDetailsOut(ans[0]));
+                }
+                else {
+                    console.log('err 051708');
+                    console.log(err);
+                }
+            });
         }
+
+
         else {
             console.log(ErrorOut(4));
             res.send(ErrorOut(4));
@@ -336,7 +322,7 @@ pool.getConnection(function (err, connection) {
         res.set('Content-Type', 'application/json; charset=utf-8');
         var thread = req.body.thread;
         if (null != thread) {
-            var sql = connection.query(`UPDATE threads SET tisClosed = 1 WHERE tid = ?`,
+            var sql = connection.query(`UPDATE threads SET tisClosed = 1 WHERE tid = ? LIMIT 1`,
                 [thread],
                 function (err, ans) {
                     if (!err) {
@@ -368,7 +354,7 @@ pool.getConnection(function (err, connection) {
                 [data.date, data.forum, data.title, data.isClosed, data.isDeleted || false, data.user, data.message, data.slug], function (err, ans) {
                     if (!err) {
                         var tvar = ans.insertId;
-                        connection.query('SELECT * FROM threads WHERE tid = ?', [ans.insertId], function (err, ans2) {
+                        connection.query('SELECT * FROM threads WHERE tid = ? LIMIT 1', [ans.insertId], function (err, ans2) {
                             if (!err) {
                                 res.send(ThreadCreateOut(ans2[0]));
                             } else {
@@ -497,7 +483,7 @@ pool.getConnection(function (err, connection) {
             if (limit != null) {
                 myLimit = `LIMIT ${limit}`;
             }
-            sql = `SELECT ${postRows} FROM tree INNER JOIN posts ON posts.pid = tree.postid WHERE posts.pthread = ${thread} ${mysince} ORDER BY ${val} ${myLimit}`;
+            sql = `SELECT ${postRows} FROM posts WHERE posts.pthread = ${thread} ${mysince} ORDER BY ${val} ${myLimit}`;
         }
         else if (sort == 'parent_tree') {
             var mysince = '';
@@ -509,9 +495,8 @@ pool.getConnection(function (err, connection) {
                 myLimit = `LIMIT ${limit}`;
             }
             sql = `SELECT ${postRows} FROM
-        (SELECT tree.${val} AS p FROM tree INNER JOIN posts ON tree.postid = posts.pid WHERE posts.pparent IS NULL AND posts.pthread = ${thread} ${mysince}  ORDER BY ${val}  ${myLimit} ) AS paths
-        INNER JOIN  tree ON POSITION(paths.p IN tree.${val}) = 1
-        INNER JOIN posts ON posts.pid = tree.postid
+        (SELECT posts.${val} AS p FROM  posts WHERE posts.pparent IS NULL AND posts.pthread = ${thread} ${mysince}  ORDER BY ${val}  ${myLimit} ) AS paths
+        INNER JOIN  posts ON posts.${val} LIKE CONCAT(paths.p, '%')
         ORDER BY ${val}`;
         }
         else {

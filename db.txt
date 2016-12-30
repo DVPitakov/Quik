@@ -9,6 +9,7 @@ uisAnonymous BOOL DEFAULT false,
 usubscription_id INT
 );
 
+
 CREATE TABLE forums
 (
 fid INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -16,9 +17,22 @@ fname CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci UNIQUE NOT NULL,
 fshort_name CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci UNIQUE NOT NULL,
 fuser CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
 fuser_id INT NOT NULL,
-FOREIGN KEY (fuser_id) REFERENCES users(uid) ON DELETE CASCADE,
 FOREIGN KEY (fuser) REFERENCES users(uemail) ON DELETE CASCADE
 );
+
+
+CREATE TABLE forums
+(
+fid INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+fname CHAR(60)  UNIQUE NOT NULL,
+fshort_name CHAR(60) UNIQUE NOT NULL,
+fuser CHAR(60) NOT NULL,
+fuser_id INT NOT NULL,
+FOREIGN KEY (fuser) REFERENCES users(uemail) ON DELETE CASCADE
+);
+
+CREATE INDEX fuser_id ON forums(fuser_id);
+CREATE INDEX fuser ON forums(fuser);
 
 CREATE TABLE threads
 (
@@ -38,10 +52,38 @@ tposts INT DEFAULT 0,
 tuser_id INT NOT NULL,
 tforum_id INT NOT NULL,
 FOREIGN KEY (tuser) REFERENCES users(uemail) ON DELETE CASCADE,
-FOREIGN KEY (tuser_id) REFERENCES users(uid) ON DELETE CASCADE,
-FOREIGN KEY (tforum) REFERENCES forums(fshort_name) ON DELETE CASCADE,
-FOREIGN KEY (tforum_id) REFERENCES forums(fid) ON DELETE CASCADE
+FOREIGN KEY (tforum) REFERENCES forums(fshort_name) ON DELETE CASCADE
 );
+
+CREATE TABLE threads
+(
+tid INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+tdate DATETIME NOT NULL,
+tforum CHAR(60) NOT NULL,
+tisClosed BOOL NOT NULL,
+tisDeleted BOOL DEFAULT false,
+tmessage TEXT NOT NULL,
+tslug TEXT NOT NULL,
+ttitle TEXT NOT NULL,
+tuser CHAR(60) NOT NULL,
+tlikes INT DEFAULT 0,
+tdislikes INT DEFAULT 0,
+tpoints INT DEFAULT 0,
+tposts INT DEFAULT 0,
+tuser_id INT NOT NULL,
+tforum_id INT NOT NULL,
+FOREIGN KEY (tuser) REFERENCES users(uemail) ON DELETE CASCADE,
+FOREIGN KEY (tforum) REFERENCES forums(fshort_name) ON DELETE CASCADE
+);
+
+CREATE INDEX tdate ON threads(tdate);
+CREATE INDEX tuser_id ON threads(tuser_id);
+CREATE INDEX tforum_id ON threads(tforum_id);
+
+///already exists
+CREATE INDEX tuser ON threads(tuser);
+CREATE INDEX tforum ON threads(tforum);
+///
 
 CREATE TABLE posts
 (
@@ -63,16 +105,169 @@ ppoints INT NOT NULL DEFAULT 0,
 puser_id INT NOT NULL,
 pforum_id INT NOT NULL,
 FOREIGN KEY (puser) REFERENCES users(uemail) ON DELETE CASCADE,
-FOREIGN KEY (puser_id) REFERENCES users(uid) ON DELETE CASCADE,
 FOREIGN KEY (pthread) REFERENCES threads(tid) ON DELETE CASCADE,
-FOREIGN KEY (pforum) REFERENCES forums(fshort_name) ON DELETE CASCADE,
-FOREIGN KEY (pforum_id) REFERENCES forums(fid) ON DELETE CASCADE
+FOREIGN KEY (pforum) REFERENCES forums(fshort_name) ON DELETE CASCADE
 );
 CREATE INDEX pdate ON posts(pdate);
+CREATE INDEX pforum_pdate ON posts(pforum, pdate);
+CREATE INDEX pthread_pdate ON posts(pthread, pdate);
+CREATE INDEX puser_pdate ON posts(puser, pdate);
+CREATE INDEX pforum_id_pdate ON posts(pforum_id, pdate);
+CREATE INDEX puser_id_pdate ON posts(puser_id, pdate);
+
+
+
+//TO DO NEW VERSION
+CREATE TABLE posts
+(
+pparent INT(8),
+pisApproved BOOL DEFAULT false,
+pisHighlighted BOOL DEFAULT false,
+pisEdited BOOL DEFAULT false,
+pisSpam BOOL DEFAULT false,
+pisDeleted BOOL DEFAULT false,
+pid INT(8) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+pdate DATETIME NOT NULL,
+pthread INT NOT NULL,
+pmessage TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+puser CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+pforum CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+plikes INT NOT NULL DEFAULT 0,
+pdislikes INT NOT NULL DEFAULT 0,
+ppoints INT NOT NULL DEFAULT 0,
+puser_id INT NOT NULL,
+pforum_id INT NOT NULL,
+FOREIGN KEY (puser) REFERENCES users(uemail) ON DELETE CASCADE,
+FOREIGN KEY (pthread) REFERENCES threads(tid) ON DELETE CASCADE,
+FOREIGN KEY (pforum) REFERENCES forums(fshort_name) ON DELETE CASCADE,
+postpath CHAR(136) NOT NULL,
+ipath CHAR(136) NOT NULL
+);
+
+CREATE TABLE posts
+(
+pparent INT(8),
+pisApproved BOOL DEFAULT false,
+pisHighlighted BOOL DEFAULT false,
+pisEdited BOOL DEFAULT false,
+pisSpam BOOL DEFAULT false,
+pisDeleted BOOL DEFAULT false,
+pid INT(8) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+pdate DATETIME NOT NULL,
+pthread INT NOT NULL,
+pmessage TEXT NOT NULL,
+puser CHAR(60) NOT NULL,
+pforum CHAR(60) NOT NULL,
+plikes INT NOT NULL DEFAULT 0,
+pdislikes INT NOT NULL DEFAULT 0,
+ppoints INT NOT NULL DEFAULT 0,
+puser_id INT NOT NULL,
+pforum_id INT NOT NULL,
+FOREIGN KEY (puser) REFERENCES users(uemail) ON DELETE CASCADE,
+FOREIGN KEY (pthread) REFERENCES threads(tid) ON DELETE CASCADE,
+FOREIGN KEY (pforum) REFERENCES forums(fshort_name) ON DELETE CASCADE,
+postpath CHAR(136) NOT NULL,
+ipath CHAR(136) NOT NULL
+);
+
+CREATE INDEX postpath ON posts(postpath);
+CREATE INDEX ipath ON posts(ipath);
+CREATE INDEX pdate ON posts(pdate);
+CREATE INDEX pforum_pdate ON posts(pforum, pdate);
+CREATE INDEX pthread_pdate ON posts(pthread, pdate);
+CREATE INDEX puser_pdate ON posts(puser, pdate);
+CREATE INDEX pforum_id_pdate ON posts(pforum_id, pdate);
+CREATE INDEX puser_id_pdate ON posts(puser_id, pdate);
+
+CREATE PROCEDURE posts_insert_before(
+ IN parent INT(8),
+ IN isApproved BOOL,
+ IN isHighlighted BOOL,
+ IN isEdited BOOL,
+ IN isSpam BOOL,
+ IN isDeleted BOOL,
+ IN date DATETIME,
+ IN thread INT,
+ IN message TEXT CHARACTER SET utf8 COLLATE utf8_general_ci,
+ IN user CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci,
+ IN forum CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci
+)
+BEGIN
+ DECLARE str CHAR(136);
+ DECLARE istr CHAR(136);
+ DECLARE next_id INT;
+ DECLARE user_id INT;
+ DECLARE forum_id INT;
+ SET user_id = (SELECT uid FROM users WHERE uemail = user LIMIT 1);
+ SET forum_id = (SELECT fid FROM forums WHERE fshort_name = forum LIMIT 1);
+ SET next_id = (SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='posts');
+ IF parent IS NULL THEN
+  SET str = LPAD(next_id,8,0);
+  SET istr = LPAD(99999999 - next_id,8,9);
+ ELSE
+  SET str = (SELECT postpath FROM posts WHERE pid = parent);
+  SET str = CONCAT(str, LPAD(next_id,8,0));
+  SET istr = (SELECT ipath FROM posts WHERE pid = parent);
+  SET istr = CONCAT(istr, LPAD(next_id,8,0));
+ END IF;
+ UPDATE threads SET tposts = tposts + 1 WHERE tid = thread;
+ INSERT INTO posts (pparent, pisApproved, pisHighlighted, pisEdited, pisSpam, pisDeleted, pdate, pthread, pmessage, puser, pforum, postpath, ipath, puser_id, pforum_id) VALUES (parent, isApproved, isHighlighted, isEdited, isSpam, isDeleted, date, thread, message, user, forum, str, istr, user_id, forum_id);
+ SELECT *, DATE_FORMAT(pdate, '%Y-%m-%d %H:%i:%s') AS date FROM posts WHERE posts.pid = LAST_INSERT_ID();
+END//
+
+DELIMITER //
+CREATE PROCEDURE posts_insert_before(
+ IN parent INT(8),
+ IN isApproved BOOL,
+ IN isHighlighted BOOL,
+ IN isEdited BOOL,
+ IN isSpam BOOL,
+ IN isDeleted BOOL,
+ IN date DATETIME,
+ IN thread INT,
+ IN message TEXT,
+ IN user CHAR(60),
+ IN forum CHAR(60)
+)
+BEGIN
+ DECLARE str CHAR(136);
+ DECLARE istr CHAR(136);
+ DECLARE next_id INT;
+ DECLARE user_id INT;
+ DECLARE forum_id INT;
+ SET user_id = (SELECT uid FROM users WHERE uemail = user LIMIT 1);
+ SET forum_id = (SELECT fid FROM forums WHERE fshort_name = forum LIMIT 1);
+ SET next_id = (SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='posts');
+ IF parent IS NULL THEN
+  SET str = LPAD(next_id,8,0);
+  SET istr = LPAD(99999999 - next_id,8,9);
+ ELSE
+  SET str = (SELECT postpath FROM posts WHERE pid = parent);
+  SET str = CONCAT(str, LPAD(next_id,8,0));
+  SET istr = (SELECT ipath FROM posts WHERE pid = parent);
+  SET istr = CONCAT(istr, LPAD(next_id,8,0));
+ END IF;
+ UPDATE threads SET tposts = tposts + 1 WHERE tid = thread;
+ INSERT INTO posts (pparent, pisApproved, pisHighlighted, pisEdited, pisSpam, pisDeleted, pdate, pthread, pmessage, puser, pforum, postpath, ipath, puser_id, pforum_id) VALUES (parent, isApproved, isHighlighted, isEdited, isSpam, isDeleted, date, thread, message, user, forum, str, istr, user_id, forum_id);
+ SELECT *, DATE_FORMAT(pdate, '%Y-%m-%d %H:%i:%s') AS date FROM posts WHERE posts.pid = LAST_INSERT_ID();
+END//
+
+///////
+
+
 CREATE TABLE subscriptions
 (
  sid INT(6) NOT NULL AUTO_INCREMENT PRIMARY KEY,
  suser CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
+ sthread INT NOT NULL,
+ FOREIGN KEY (suser) REFERENCES users(uemail) ON DELETE CASCADE,
+ FOREIGN KEY (sthread) REFERENCES threads(tid) ON DELETE CASCADE
+);
+
+CREATE TABLE subscriptions
+(
+ sid INT(6) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ suser CHAR(60) DEFAULT NULL,
  sthread INT NOT NULL,
  FOREIGN KEY (suser) REFERENCES users(uemail) ON DELETE CASCADE,
  FOREIGN KEY (sthread) REFERENCES threads(tid) ON DELETE CASCADE
@@ -84,6 +279,16 @@ CREATE TABLE followers
 id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
 firstUser CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
 secondUser CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+firstUser_id INT NOT NULL,
+secondUser_id INT NOT NULL,
+FOREIGN KEY (firstUser) REFERENCES users(uemail) ON DELETE CASCADE,
+FOREIGN KEY (secondUser) REFERENCES users(uemail) ON DELETE CASCADE
+);
+CREATE TABLE followers
+(
+id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+firstUser CHAR(60) NOT NULL,
+secondUser CHAR(60) NOT NULL,
 firstUser_id INT NOT NULL,
 secondUser_id INT NOT NULL,
 FOREIGN KEY (firstUser) REFERENCES users(uemail) ON DELETE CASCADE,
@@ -199,62 +404,3 @@ BEGIN
   SELECT tid, DATE_FORMAT(tdate, '%Y-%m-%d %H:%i:%s') AS tdate, tforum, tisClosed, tisDeleted, tmessage, tslug, ttitle, tuser, tlikes, tdislikes, tpoints
   FROM threads WHERE tid = thread;
 END//
-
-set-variable = innodb_buffer_pool_size= 512M 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-DELIMITER //
-CREATE TRIGGER threads_update AFTER UPDATE ON threads
-FOR EACH ROW
-BEGIN
-  IF OLD.tisDeleted = 0 AND NEW.tisDeleted = 1 THEN
-    UPDATE posts SET pisDeleted = 1 WHERE pthread = NEW.tid;
-  END IF;
-END//
-
-
