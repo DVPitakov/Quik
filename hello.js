@@ -4,8 +4,8 @@ var app = express();
 var mysql = require('mysql');
 var url = require('url');
 var pool = mysql.createPool({
-    connectionLimit: 1000,
-    acquireTimeout: 1000,
+    connectionLimit: 100,
+    acquireTimeout: 100,
     multipleStatements: true,
     host: 'localhost',
     user: 'root',
@@ -102,6 +102,7 @@ pool.getConnection(function (err, connection) {
     }
 
     app.get('/db/api/status/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var sql = 'SELECT * FROM (SELECT COUNT(*) AS user FROM users) AS user,' +
             '(SELECT COUNT(*) AS thread FROM threads) AS  thread,' +
@@ -119,50 +120,53 @@ pool.getConnection(function (err, connection) {
                             posts: ans[0].post
                         }
                     });
+                console.log('1/db/api/status/' + (Date.now()-a));
             }
             else {
                 console.log("err 201436");
                 res.send(ErrorOut(4));
+                console.log('2/db/api/status/' + (Date.now()-a));
             }
         });
     });
 
     //DELETE FROM tree;
     app.post('/db/api/clear/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
-        connection.query(
-            `DELETE FROM followers; 
- DELETE FROM posts; DELETE FROM threads; 
- DELETE FROM forums; DELETE FROM users;
- DELETE FROM subscriptions;`
-            , function (err, ans) {
-                if (!err) {
-                    res.send(ClearOut());
-                }
-                else {
-                    res.send(ErrorOut(4));
-                }
-            });
+        let sql = 'DELETE FROM followers; DELETE FROM posts; DELETE FROM threads; DELETE FROM forums; DELETE FROM users; DELETE FROM subscriptions;';
+        connection.query(sql, function (err, ans) {
+            if (!err) {
+                res.send(ClearOut());
+                console.log('1/db/api/clear/' + (Date.now()-a));
+            }
+            else {
+                res.send(ErrorOut(4));
+                console.log('error');
+                console.log('2/db/api/clear/' + (Date.now()-a));
+            }
+        });
     });
 
 //POST
-
-    var counter = 0;
     app.post('/db/api/post/create/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.date && null != data.thread && null != data.message && null != data.user && null != data.forum) {
-            connection.query('CALL posts_insert_before(?,?,?,?,?,?,?,?,?,?,?);',
+            console.log(connection.query('CALL posts_insert_before(?,?,?,?,?,?,?,?,?,?,?);',
                 [data.parent, data.isApproved || false, data.isHighlighted || false, data.isEdited || false, data.isSpam || false, data.isDeleted || false, data.date, data.thread, data.message, data.user, data.forum],
                 function (err, ans) {
                     if (!err) {
                         res.send(JSON.stringify(PostsCreateOut(ans[0][0])));
+                        console.log('1/db/api/post/create/'  + (Date.now()-a));
                     }
                     else {
                         console.log(err);
                         res.send(ErrorOut(5));
+                        console.log('2/db/api/post/create/' + (Date.now()-a));
                     }
-                });
+                }).sql);
         }
         else {
             console.log("WRONG DATA");
@@ -171,19 +175,23 @@ pool.getConnection(function (err, connection) {
     });
 
     app.get('/db/api/post/details/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.query;
         if (null != data.post) {
             ShowPost(data.post, connection, function (out) {
-                res.send(out)
+                res.send(out);
+                console.log('1/db/api/post/details/' + (Date.now()-a));
             }, data.related)
         }
         else {
             res.send(ErrorOut(3));
+            console.log('2/db/api/post/details/' + (Date.now()-a));
         }
     });
 
     app.post('/db/api/post/update/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.post && null != data.message) {
@@ -192,31 +200,37 @@ pool.getConnection(function (err, connection) {
                 function (err, ans) {
                     if (!err) {
                         ShowPost(data.post, connection, function (data) {
-                            res.send(data)
+                            res.send(data);
+                            console.log('1/db/api/post/update/' + (Date.now()-a));
                         });
                     }
                     else {
                         console.log("err 180136");
+                        res.send(ErrorOut(4));
                     }
                 });
 
         }
         else {
+            console.log('err 2123');
             res.send(ErrorOut(4));
         }
     });
 
     app.post('/db/api/post/remove/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.post) {
             connection.query(`UPDATE posts SET pisDeleted = 1 WHERE  pid = ? LIMIT 1`, [data.post], function (err, ans) {
                 if (!err) {
                     res.send(PostRemoveOut({post: data.post}));
+                    console.log('1/db/api/post/remove/' + (Date.now()-a));
                 }
                 else {
                     console.log('err 051603');
                     console.log(err);
+                    res.send(ErrorOut(4));
                 }
             });
         }
@@ -227,26 +241,30 @@ pool.getConnection(function (err, connection) {
     });
 
     app.post('/db/api/post/restore/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.post) {
             connection.query(`UPDATE posts SET pisDeleted = 0 WHERE  pid = ? LIMIT 1`, [data.post], function (err, ans) {
                 if (!err) {
                     res.send(PostRemoveOut({post: data.post}));
+                    console.log('1/db/api/post/restore/' + (Date.now()-a));
                 }
                 else {
                     console.log('err 051603');
                     console.log(err);
+                    res.send(ErrorOut(4));
                 }
             });
         }
         else {
-            console.log(ErrorOut(4));
+            console.log('err 301837');
             res.send(ErrorOut(4));
         }
     });
 
     app.post('/db/api/post/vote/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.post && null != data.vote) {
@@ -257,28 +275,32 @@ pool.getConnection(function (err, connection) {
                 sql = `CALL votePost(?, 0)`
             }
             else {
+                console.log('err /db/api/post/vote/');
                 return res.send(ErrorOut(3));
             }
             connection.query(sql, [data.post], function (err, ans) {
                 if (!err) {
                     res.send(PostDetailsOut(ans[0]));
+                    console.log('1/db/api/post/vote/' + (Date.now() - a));
                 }
                 else {
                     console.log('err 051708');
                     console.log(err);
+                    res.send(ErrorOut(4));
                 }
             });
         }
 
 
         else {
-            console.log(ErrorOut(4));
+            console.log('err 2134');
             res.send(ErrorOut(4));
         }
     });
 
     app.get('/db/api/post/list/', function (req, res) {
-
+        let a = Date.now();
+        res.set('Content-Type', 'application/json; charset=utf-8');
         var forum = req.query.forum;
         var thread = req.query.thread;
         if (forum == null && thread == null) {
@@ -290,10 +312,10 @@ pool.getConnection(function (err, connection) {
         var order = (req.query.order == 'asc') ? 'ASC' : 'DESC';
         var sql = "";
         if (forum != null) {
-            sql = `SELECT DISTINCT ${postRows} FROM posts WHERE  pforum =  '${forum}'`;
+            sql = `SELECT ${postRows} FROM posts WHERE  pforum =  '${forum}'`;
         }
         else {
-            sql = `SELECT DISTINCT ${postRows} FROM posts WHERE  pthread =  ${thread}`;
+            sql = `SELECT ${postRows} FROM posts WHERE  pthread =  ${thread}`;
         }
         if (null != since) sql += ` AND (posts.pdate >= STR_TO_DATE('${since}', '%Y-%m-%d %H:%i:%s'))`;
         sql += ` ORDER BY pdate ${order}`;
@@ -301,17 +323,19 @@ pool.getConnection(function (err, connection) {
         connection.query(sql, function (err, ans) {
             if (!err) {
                 if (ans[0] == null) {
-                    return res.send({code: 0, response: []})
+                    res.send({code: 0, response: []});
+                    return console.log('1/db/api/post/list/' + (Date.now()-a));
                 }
-                return res.send({
+                res.send({
                     code: 0, response: ans.map(el => {
                         return PostDetailsOut(el).response
                     })
-                })
-                    ;
+                });
+                return console.log('2/db/api/post/details/' + (Date.now()-a));
             }
             else {
                 console.log("err 180000");
+                res.send(ErrorOut(4));
             }
         });
     });
@@ -319,6 +343,7 @@ pool.getConnection(function (err, connection) {
 //THREAD
 
     app.post('/db/api/thread/close/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var thread = req.body.thread;
         if (null != thread) {
@@ -334,6 +359,7 @@ pool.getConnection(function (err, connection) {
                                 }
                             })
                         );
+                        console.log('1/db/api/thread/close/' + (Date.now()-a));
                     }
                     else {
                         console.log("err 182138");
@@ -342,11 +368,13 @@ pool.getConnection(function (err, connection) {
                 });
         }
         else {
+            console.log('wrong data');
             res.send(ErrorOut(3));
         }
     });
 
     app.post('/db/api/thread/create/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.forum && null != data.title && null != data.isClosed && null != data.user && null != data.message && null != data.slug && null != data.date) {
@@ -357,6 +385,7 @@ pool.getConnection(function (err, connection) {
                         connection.query('SELECT * FROM threads WHERE tid = ? LIMIT 1', [ans.insertId], function (err, ans2) {
                             if (!err) {
                                 res.send(ThreadCreateOut(ans2[0]));
+                                console.log('1/db/api/thread/create/' + (Date.now()-a));
                             } else {
                                 console.log("err 181752");
                                 res.send(ErrorOut(4));
@@ -364,6 +393,7 @@ pool.getConnection(function (err, connection) {
                         });
                     }
                     else {
+                        console.log("err 121844");
                         res.send(ErrorOut(5));
                     }
                 });
@@ -374,25 +404,29 @@ pool.getConnection(function (err, connection) {
     });
 
     app.get('/db/api/thread/details/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.query;
         if (data.related != null) {
             if (!Array.isArray(data.related)) data.related = [data.related];
             if (!relatedOrder(data.related, ['user', 'forum'])) {
-                return res.send(ErrorOut(3));
+                res.send(ErrorOut(3));
+                return console.log('1/db/api/thread/details/' + (Date.now()-a));
             }
         }
         if (null != data.thread) {
             ShowThread(data.thread, connection, function (out) {
-                return res.send(out)
+                res.send(out);
+                return console.log('2/db/api/post/details/' + (Date.now()-a));
             }, data.related)
         }
         else {
-            return es.send(ErrorOut(3));
+            return res.send(ErrorOut(3));
         }
     });
 
     app.get('/db/api/thread/list/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         let forum = req.query.forum;
         let user = req.query.user;
@@ -411,7 +445,7 @@ pool.getConnection(function (err, connection) {
         if (limit != null) {
             myLimit = `LIMIT ${limit}`
         }
-        let sql = `SELECT DISTINCT ${threadRows} FROM threads WHERE ${userOrForum} ${mySince} ORDER BY tdate ${order} ${myLimit}`;
+        let sql = `SELECT ${threadRows} FROM threads WHERE ${userOrForum} ${mySince} ORDER BY tdate ${order} ${myLimit}`;
         connection.query(sql, [user || forum], function (err, ans) {
             if (!err) {
                 var resp = {
@@ -422,11 +456,13 @@ pool.getConnection(function (err, connection) {
                     }
                     ;
                 res.send(JSON.stringify(resp));
+                console.log('1/db/api/thread/list/' + (Date.now()-a));
             }
             else {
                 console.log('err 172349');
                 console.log(err);
-                console.log("SQL: " + sql)
+                console.log("SQL: " + sql);
+                res.send(ErrorOut(4));
             }
         });
 
@@ -434,6 +470,7 @@ pool.getConnection(function (err, connection) {
     });
 
     app.get('/db/api/thread/listPosts/', function (req, res) {
+        let a = Date.now();
         let val = "";
         let sql = "";
         res.set('Content-Type', 'application/json; charset=utf-8');
@@ -452,11 +489,11 @@ pool.getConnection(function (err, connection) {
         if (order != null) {
             if (order == 'asc') {
                 order = 'ASC';
-                val = 'postpath';
+                val = 'pl0';
             }
             else if (order == 'desc') {
                 order = "DESC";
-                val = 'ipath';
+                val = 'pil0';
             }
             else {
                 res.send(ErrorOut(3));
@@ -464,7 +501,7 @@ pool.getConnection(function (err, connection) {
         }
         else {
             order = "DESC";
-            val = 'ipath';
+            val = 'pil0';
         }
         if (sort == 'flat') {
             sql = `SELECT ${postRows} FROM posts WHERE posts.pthread = ${thread}`;
@@ -483,7 +520,7 @@ pool.getConnection(function (err, connection) {
             if (limit != null) {
                 myLimit = `LIMIT ${limit}`;
             }
-            sql = `SELECT ${postRows} FROM posts WHERE posts.pthread = ${thread} ${mysince} ORDER BY ${val} ${myLimit}`;
+            sql = `SELECT ${postRows} FROM posts WHERE posts.pthread = ${thread} ${mysince} ORDER BY ${val}, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11 ${myLimit}`;
         }
         else if (sort == 'parent_tree') {
             var mysince = '';
@@ -495,9 +532,9 @@ pool.getConnection(function (err, connection) {
                 myLimit = `LIMIT ${limit}`;
             }
             sql = `SELECT ${postRows} FROM
-        (SELECT posts.${val} AS p FROM  posts WHERE posts.pparent IS NULL AND posts.pthread = ${thread} ${mysince}  ORDER BY ${val}  ${myLimit} ) AS paths
-        INNER JOIN  posts ON posts.${val} LIKE CONCAT(paths.p, '%')
-        ORDER BY ${val}`;
+        (SELECT posts.pid AS p FROM  posts WHERE posts.pparent IS NULL AND posts.pthread = ${thread} ${mysince}  ORDER BY ${val}, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11  ${myLimit} ) AS paths
+        INNER JOIN  posts ON posts.pl0 = p
+        ORDER BY ${val}, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11`;
         }
         else {
             return res.send(ErrorOut(3));
@@ -507,6 +544,7 @@ pool.getConnection(function (err, connection) {
                 console.log("err 052236");
                 console.log(sql);
                 console.log(err);
+                res.send(ErrorOut(4));
             }
             else {
                 res.send({
@@ -514,13 +552,15 @@ pool.getConnection(function (err, connection) {
                     response: ans.map(el => {
                         return PostDetailsOut(el).response;
                     })
-                })
-                ;
+                });
+                console.log('1/db/api/thread/listPosts/' + (Date.now() - a));
             }
         })
     });
 
     app.post('/db/api/thread/open/', function (req, res) {
+        let a = Date.now();
+        res.set('Content-Type', 'application/json; charset=utf-8');
         let thread = req.body.thread;
         let sql = 'UPDATE threads SET tisClosed = 0 WHERE tid = ?';
         if (thread == null) {
@@ -535,10 +575,12 @@ pool.getConnection(function (err, connection) {
                 code: 0,
                 response: thread
             });
+            console.log('1/db/api/thread/open/' + (Date.now()-a));
         })
     });
 
     app.post('/db/api/thread/subscribe/', function (req, res) {
+        let a = Date.now();
         let thread = req.body.thread;
         let user = req.body.user;
         res.set('Content-Type', 'application/json; charset=utf-8');
@@ -552,6 +594,7 @@ pool.getConnection(function (err, connection) {
                 console.log("err 061548");
                 console.log(err);
                 console.log(sql);
+                res.send(ErrorOut(4));
             }
             else {
                 res.send({
@@ -561,12 +604,14 @@ pool.getConnection(function (err, connection) {
                         user: user
                     }
                 });
+                console.log('1/db/api/thread/subscribe/' + (Date.now() - a));
             }
         });
 
     });
 
     app.post('/db/api/thread/unsubscribe/', function (req, res) {
+        let a = Date.now();
         let thread = req.body.thread;
         let user = req.body.user;
         res.set('Content-Type', 'application/json; charset=utf-8');
@@ -574,12 +619,13 @@ pool.getConnection(function (err, connection) {
             console.log("err err err err");
             return res.send(ErrorOut(3));
         }
-        let sql = `DELETE FROM subscriptions WHERE suser = ? AND sthread = ?`;
+        let sql = `DELETE FROM subscriptions WHERE suser = ? AND sthread = ? LIMIT 1`;
         connection.query(sql, [user, thread], function (err, ans) {
             if (err) {
                 console.log("err 082057");
                 console.log(err);
                 console.log(sql);
+                res.send(ErrorOut(4));
             }
             else {
                 res.send({
@@ -589,12 +635,14 @@ pool.getConnection(function (err, connection) {
                         user: user
                     }
                 });
+                console.log('1/db/api/thread/unsubscribe/' + (Date.now() - a));
             }
         });
 
     });
 
     app.post('/db/api/thread/remove/', function (req, res) {
+        let a = Date.now();
         var thread = req.body.thread;
         res.set('Content-Type', 'application/json; charset=utf-8');
         if (thread == null) {
@@ -607,6 +655,7 @@ pool.getConnection(function (err, connection) {
                 console.log("err 061548");
                 console.log(err);
                 console.log(sql);
+                res.send(ErrorOut(4));
             }
             else {
                 sql = 'UPDATE posts SET pisDeleted = 1 WHERE pthread = ?';
@@ -615,12 +664,14 @@ pool.getConnection(function (err, connection) {
                         console.log("err 080805");
                         console.log(err);
                         console.log(sql);
+                        res.send(ErrorOut(4));
                     }
                     else {
                         return res.send({
                             code: 0,
                             response: thread
-                        })
+                        });
+                        console.log('1/db/api/thread/remove/' + (Date.now() - a));
                     }
                 });
             }
@@ -629,6 +680,7 @@ pool.getConnection(function (err, connection) {
     });
 
     app.post('/db/api/thread/restore/', function (req, res) {
+        let a = Date.now();
         var thread = req.body.thread;
         res.set('Content-Type', 'application/json; charset=utf-8');
         if (thread == null) {
@@ -641,6 +693,7 @@ pool.getConnection(function (err, connection) {
                 console.log("err 061548");
                 console.log(err);
                 console.log(sql);
+                res.send(ErrorOut(4));
             }
             else {
                 sql = 'UPDATE posts SET pisDeleted = 0 WHERE pthread = ?';
@@ -649,12 +702,14 @@ pool.getConnection(function (err, connection) {
                         console.log("err 080805");
                         console.log(err);
                         console.log(sql);
+                        res.send(ErrorOut(4));
                     }
                     else {
                         return res.send({
                             code: 0,
                             response: thread
-                        })
+                        });
+                        console.log('1/db/api/thread/restore/' + (Date.now() - a));
                     }
                 });
             }
@@ -663,6 +718,7 @@ pool.getConnection(function (err, connection) {
     });
 
     app.post('/db/api/thread/update/', function (req, res) {
+        let a = Date.now();
         let thread = req.body.thread;
         let slug = req.body.slug;
         let message = req.body.message;
@@ -682,12 +738,14 @@ pool.getConnection(function (err, connection) {
                     res.send(ErrorOut(4));
                 }
                 res.send(ThreadDetailsOut(ans));
+                console.log('1/db/api/thread/update/' + (Date.now() - a));
             });
         })
 
     });
 
     app.post('/db/api/thread/vote/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.thread && null != data.vote) {
@@ -698,15 +756,18 @@ pool.getConnection(function (err, connection) {
                 sql = `CALL voteThread(?, 0)`
             }
             else {
+                console.log('err 2143');
                 return res.send(ErrorOut(3));
             }
             connection.query(sql, [data.thread], function (err, ans) {
                 if (!err) {
                     res.send(ThreadDetailsOut(ans[0]));
+                    console.log('1/db/api/thread/vote/' + (Date.now()-a));
                 }
                 else {
                     console.log('err 051708');
                     console.log(err);
+                    res.send(ErrorOut(4));
                 }
             });
 
@@ -720,6 +781,7 @@ pool.getConnection(function (err, connection) {
 //FORUM
 
     app.post('/db/api/forum/create/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.name && null != data.short_name && null != data.user) {
@@ -730,24 +792,29 @@ pool.getConnection(function (err, connection) {
                         connection.query(`SELECT * FROM forums WHERE fshort_name = ?`, [data.short_name], function (err, ans2) {
                             if (!err) {
                                 res.send(ForumCreateOut(ans2[0]));
+                                console.log('1/db/api/forum/create/' + (Date.now()-a));
                             }
                             else {
                                 console.log("err 180145");
+                                res.send(ErrorOut(4));
                             }
                         });
                     }
                     else {
+                        console.log("err 2145");
                         res.send(ErrorOut(5));
                     }
                 });
         }
         else {
+            console.log("err 2146");
             res.send(ErrorOut(3));
         }
 
     });
 
     app.get('/db/api/forum/details/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.query;
         if (data.related != 0) {
@@ -758,18 +825,20 @@ pool.getConnection(function (err, connection) {
         }
         if (null != data.forum) {
             ShowForum(data.forum, connection, out => {
-                    res.send(out)
+                    res.send(out);
+                    console.log('1/db/api/forum/details/' + (Date.now()-a));
                 },
                 data.related
-            )
-            ;
+            );
         }
         else {
+            console.log('err 2147');
             res.send(ErrorOut(3));
         }
     });
 
     app.get('/db/api/forum/listPosts/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var forum = req.query.forum;
         var since = req.query.since;
@@ -791,10 +860,6 @@ pool.getConnection(function (err, connection) {
                 tables += ' INNER JOIN users ON users.uemail = posts.puser';
                 targets += `, ${userRows}`;
             }
-            if (withForum) {
-                tables += ' INNER JOIN forums ON forums.fshort_name = posts.pforum';
-                targets += `, ${forumRows}`;
-            }
             if (withThread) {
                 tables += ' INNER JOIN threads ON threads.tid = posts.pthread';
                 targets += `, ${threadRows}`;
@@ -806,23 +871,43 @@ pool.getConnection(function (err, connection) {
             connection.query(sql, function (err, ans) {
                 if (err) {
                     console.log("err 182049");
+                    res.send(ErrorOut(4));
                 }
-                return res.send({
-                    code: 0,
-                    response: ans.map(el => {
-                        if (withUser) {
-                            el.puser = UserDetailsOut(el).response;
-                        }
-                        if (withForum) {
-                            el.pforum = ForumDetailsOut(el).response;
-                        }
-                        if (withThread) {
-                            el.pthread = ThreadDetailsOut(el).response;
-                        }
-                        return PostDetailsOut(el).response;
-                    })
-                })
-                    ;
+                if (withForum) {
+                    connection.query(`SELECT ${forumRows} FROM forums WHERE fshort_name = ?`,[forum], function (err, ans2){
+                        if (err) throw err;
+                        console.log('!!!/db/api/forum/listPosts/' + (Date.now() - a));
+                        res.send({
+                            code: 0,
+                            response: ans.map(el => {
+                                if (withUser) {
+                                    el.puser = UserDetailsOut(el).response;
+                                }
+                                el.pforum = ForumDetailsOut(ans2[0]).response;
+                                if (withThread) {
+                                    el.pthread = ThreadDetailsOut(el).response;
+                                }
+                                return PostDetailsOut(el).response;
+                            })
+                        });
+                        return console.log('1/db/api/forum/listPosts/' + (Date.now() - a));
+                    });
+                }
+                else {
+                    res.send({
+                        code: 0,
+                        response: ans.map(el => {
+                            if (withUser) {
+                                el.puser = UserDetailsOut(el).response;
+                            }
+                            if (withThread) {
+                                el.pthread = ThreadDetailsOut(el).response;
+                            }
+                            return PostDetailsOut(el).response;
+                        })
+                    });
+                    return console.log('2/db/api/forum/listPosts/' + (Date.now() - a));
+                }
             });
         }
         else {
@@ -833,6 +918,7 @@ pool.getConnection(function (err, connection) {
     });
 
     app.get('/db/api/forum/listThreads/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var forum = req.query.forum;
         var since = req.query.since;
@@ -863,12 +949,12 @@ pool.getConnection(function (err, connection) {
             connection.query(sql, function (err, ansArr) {
                 if (err) {
                     return console.log("err 092042");
+                    res.send(ErrorOut(4));
                 }
                 if (withForum) {
                     ansArr.forEach(el => {
                         el.tforum = ForumDetailsOut(el).response;
-                    })
-                    ;
+                    });
                 }
                 let counter = 0;
                 if (withUser) {
@@ -881,27 +967,26 @@ pool.getConnection(function (err, connection) {
                     addDetailsInUserArray(ansArr, data => {
                         data.forEach(el => {
                             el.tuser = UserDetailsOut(el).response;
-                        })
-                        ;
-                        return res.send({
+                        });
+                        res.send({
                             code: 0,
                             response: ansArr.map(el => {
                                 return ThreadDetailsOut(el).response
                             })
-                        })
-                            ;
+                        });
+                        return console.log('1/db/api/forum/listThreads/' + (Date.now() - a));
 
                     })
                     ;
                 }
                 else {
-                    return res.send({
+                    res.send({
                         code: 0,
                         response: ansArr.map(el => {
                             return ThreadDetailsOut(el).response
                         })
-                    })
-                        ;
+                    });
+                    return console.log('2/db/api/forum/listThreads/' + (Date.now()-a));
                 }
             });
         }
@@ -913,6 +998,7 @@ pool.getConnection(function (err, connection) {
     });
 
     app.get('/db/api/forum/listUsers/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.query;
         var limit = data.limit;
@@ -920,7 +1006,7 @@ pool.getConnection(function (err, connection) {
         var since_id = data.since_id;
         //
         if (null != data.forum) {
-            var sql = `SELECT DISTINCT ${userRows} FROM users, posts WHERE (users.uemail = posts.puser AND posts.pforum = '${data.forum}')`;
+            var sql = `SELECT DISTINCT ${userRows} FROM users INNER JOIN posts ON users.uid = posts.puser_id WHERE posts.pforum = '${data.forum}'`;
             if (since_id) {
                 sql += ` AND users.uid >= ${since_id}`
             }
@@ -932,19 +1018,19 @@ pool.getConnection(function (err, connection) {
                     addDetailsInUserArray(ans, (data) => {
                         var outMas = data.map(el => {
                                 return UserDetailsOut(el).response
-                            }
-                            )
-                            ;
+                            });
                         var out = {
                             code: 0,
                             response: outMas
                         };
-                        res.send(out)
+                        res.send(out);
+                        console.log('1/db/api/forum/listUsers/' + (Date.now()-a));
                     })
                     ;
                 }
                 else {
                     console.log("err 092058");
+                    res.send(ErrorOut(4));
                 }
             });
         }
@@ -959,6 +1045,7 @@ pool.getConnection(function (err, connection) {
     app.use(bodyParser.json());
 
     app.post('/db/api/user/create/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (!data.isAnonymous) data.isAnonymous = false;
@@ -974,6 +1061,7 @@ pool.getConnection(function (err, connection) {
                     connection.query(select, [data.email], function (err, ans2) {
                         if (!err) {
                             res.send(UserCrateOut(ans2[0]));
+                            console.log('1/db/api/user/create/' + (Date.now() - a));
                         }
                         else {
                             res.send(ErrorOut(4));
@@ -989,13 +1077,16 @@ pool.getConnection(function (err, connection) {
     });
 
     app.get('/db/api/user/details/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         ShowUser(req.query.user, connection, function (out) {
-            res.send(out)
+            res.send(out);
+            console.log('1/db/api/user/details/' + (Date.now()-a));
         });
     });
 
     app.post('/db/api/user/follow/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.follower && null != data.followee) {
@@ -1003,7 +1094,8 @@ pool.getConnection(function (err, connection) {
                 , [data.followee, data.follower], function (err, ans) {
                     if (!err) {
                         ShowUser(data.follower, connection, function (out) {
-                            res.send(out)
+                            res.send(out);
+                            console.log('1/db/api/user/follow/' + (Date.now()-a));
                         });
                     }
                     else {
@@ -1020,6 +1112,7 @@ pool.getConnection(function (err, connection) {
     });
 
     app.get('/db/api/user/listFollowers/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.query;
         var limit = data.limit;
@@ -1028,7 +1121,7 @@ pool.getConnection(function (err, connection) {
         var since_id = data.since_id;
         //
         if (null != data.user) {
-            var sql = `SELECT * FROM followers, users WHERE (firstUser = '${data.user}') AND (uemail = secondUser)`;
+            var sql = `SELECT * FROM followers INNER JOIN users ON uemail = secondUser WHERE (firstUser = '${data.user}')`;
             sql += ` ORDER BY uname ${order}`;
             if (null != limit) sql += ` LIMIT ${limit}`;
             connection.query(sql, function (err, ans) {
@@ -1036,18 +1129,19 @@ pool.getConnection(function (err, connection) {
                     addDetailsInUserArray(ans, data => {
                         var outMas = data.map(el => {
                                 return UserDetailsOut(el).response
-                            }
-                            )
-                            ;
+                            });
                         var out = {
                             code: 0,
                             response: outMas
                         };
-                        res.send(out)
+                        res.send(out);
+                        console.log('1/db/api/user/listFollowers/' + (Date.now()-a));
+
                     });
                 }
                 else {
                     console.log("err 181845");
+                    res.send(ErrorOut(4));
                 }
             });
         }
@@ -1058,6 +1152,7 @@ pool.getConnection(function (err, connection) {
     });
 
     app.get('/db/api/user/listFollowing/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.query;
         var limit = data.limit;
@@ -1081,12 +1176,13 @@ pool.getConnection(function (err, connection) {
                             code: 0,
                             response: outMas
                         };
-                        res.send(out)
-                    })
-                    ;
+                        res.send(out);
+                        console.log('1/db/api/puser/listFollowing/' + (Date.now()-a));
+                    });
                 }
                 else {
                     console.log("err 181845");
+                    res.send(ErrorOut(4));
                 }
             });
         }
@@ -1097,6 +1193,7 @@ pool.getConnection(function (err, connection) {
     });
 
     app.get('/db/api/user/listPosts/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var user = req.query.user;
         var since = req.query.since;
@@ -1112,17 +1209,17 @@ pool.getConnection(function (err, connection) {
                 if (null != ans) {
                     var outArr = ans.map(el => {
                             return PostDetailsOut(el).response
-                        }
-                        )
-                        ;
+                        });
                     var out = {
                         code: 0,
                         response: outArr
                     };
                     res.send(out);
+                    console.log('1/db/api/user/listPosts/' + (Date.now()-a));
                 }
                 else {
                     console.log("err 182049");
+                    res.send(ErrorOut(4));
                 }
             });
         }
@@ -1133,6 +1230,7 @@ pool.getConnection(function (err, connection) {
     });
 
     app.post('/db/api/user/unfollow/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.follower && null != data.followee) {
@@ -1144,11 +1242,13 @@ pool.getConnection(function (err, connection) {
                             , [data.followee, data.follower], function (err, ans) {
                                 if (!err) {
                                     ShowUser(data.follower, connection, function (out) {
-                                        res.send(out)
+                                        res.send(out);
+                                        console.log('1/db/api/user/unfollow/' + (Date.now()-a));
                                     });
                                 }
                                 else {
                                     console.log("err 181800");
+                                    res.send(ErrorOut(4));
                                 }
                             });
                     }
@@ -1166,6 +1266,7 @@ pool.getConnection(function (err, connection) {
     });
 
     app.post('/db/api/user/updateProfile/', function (req, res) {
+        let a = Date.now();
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
 
@@ -1179,16 +1280,19 @@ pool.getConnection(function (err, connection) {
                             , function (err, ans) {
                                 if (!err) {
                                     ShowUser(data.user, connection, function (hoho) {
-                                        res.send(JSON.stringify(hoho))
+                                        res.send(JSON.stringify(hoho));
+                                        console.log('1/db/api/user/updateProfile/' + (Date.now()-a));
                                     });
                                 }
                                 else {
                                     console.log('err 180127');
+                                    res.send(ErrorOut(4));
                                 }
                             });
                     }
                     else {
                         console.log('err 180128');
+                        res.send(ErrorOut(4));
                     }
                 });
         }

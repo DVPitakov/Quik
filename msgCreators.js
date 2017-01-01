@@ -67,11 +67,9 @@ function ShowThread(thread, connection, callback, related) {
         if (withForum) counter++;
     }
     var sql = `SELECT *, DATE_FORMAT(tdate, '%Y-%m-%d %H:%i:%s') AS date FROM threads`;
-    if (withUser) sql += `, users`;
-    if (withForum) sql += `, forums`;
+    if (withUser) sql += ` INNER JOIN users ON users.uid = threads.tuser_id`;
+    if (withForum) sql += ` INNER JOIN forums ON forums.fid = threads.tforum_id`;
     sql += ' WHERE (tid = ?)';
-    if (withUser) sql += ` AND (users.uid = threads.tuser_id)`;
-    if (withForum) sql += ` AND (forums.fid = threads.tforum_id)`;
     sql += ' LIMIT 1';
     connection.query(sql,
         [thread],
@@ -108,22 +106,16 @@ function ShowPost(post, connection, callback, related) {
     var counter = 0;
     if (null != related) {
         var withUser = find(related, 'user');
-        if (withUser) counter++;
         var withThread = find(related, 'thread');
-        if (withThread) counter++;
         var withForum = find(related, 'forum');
-        if (withForum) counter++;
     }
     var sql = `SELECT *`;
     if (withThread) sql += `, DATE_FORMAT(tdate, '%Y-%m-%d %H:%i:%s') AS ttdate`;
     sql += `, DATE_FORMAT(pdate, '%Y-%m-%d %H:%i:%s') AS ppdate FROM posts`;
-    if (withUser) sql += `, users`;
-    if (withThread) sql += `, threads`;
-    if (withForum) sql += `, forums`;
+    if (withUser) sql += ` INNER JOIN users ON users.uid = posts.puser_id`;
+    if (withThread) sql += ` INNER JOIN threads ON threads.tid = posts.pthread`;
+    if (withForum) sql += ` INNER JOIN forums ON forums.fid = posts.pforum_id`;
     sql += ' WHERE (pid = ?)';
-    if (withUser) sql += ` AND (users.uid = posts.puser_id)`;
-    if (withThread) sql += ` AND (threads.tid = posts.pthread)`;
-    if (withForum) sql += ` AND (forums.fid = posts.pforum_id)`;
     sql += ' LIMIT 1';
     connection.query(sql, [post], function (err, ans) {
         if (!err) {
@@ -143,10 +135,12 @@ function ShowPost(post, connection, callback, related) {
             }
             else {
                 callback(ErrorOut(1));
+                console.log("err301624");
             }
         }
         else {
             callback(ErrorOut(4));
+            console.log("err301625");
         }
     });
 }

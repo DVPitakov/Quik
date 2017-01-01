@@ -1,0 +1,78 @@
+DELIMITER //
+CREATE PROCEDURE posts_insert_before(
+ IN parent INT(8),
+ IN isApproved BOOL,
+ IN isHighlighted BOOL,
+ IN isEdited BOOL,
+ IN isSpam BOOL,
+ IN isDeleted BOOL,
+ IN date DATETIME,
+ IN thread INT,
+ IN message TEXT,
+ IN user CHAR(60),
+ IN forum CHAR(60)
+)
+BEGIN
+ DECLARE l0 INT;
+ DECLARE il0 INT;
+ DECLARE l1 INT;
+ DECLARE l2 INT;
+ DECLARE l3 INT;
+ DECLARE l4 INT;
+ DECLARE l5 INT;
+ DECLARE l6 INT;
+ DECLARE l7 INT;
+ DECLARE l8 INT;
+ DECLARE l9 INT;
+ DECLARE l10 INT;
+ DECLARE l11 INT;
+ DECLARE next_id INT;
+ DECLARE user_id INT;
+ DECLARE forum_id INT;
+ SET user_id = (SELECT uid FROM users WHERE uemail = user LIMIT 1);
+ SET forum_id = (SELECT fid FROM forums WHERE fshort_name = forum LIMIT 1);
+ SET next_id = (SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='posts');
+ IF parent IS NULL THEN
+  SET l0 = next_id;
+  SET il0 = 1000000000 - l0;
+  SET l1 = -1;
+  SET l2 = -1;
+  SET l3 = -1;
+  SET l4 = -1;
+  SET l5 = -1;
+  SET l6 = -1;
+  SET l7 = -1;
+  SET l8 = -1;
+  SET l9 = -1;
+  SET l10 = -1;
+  SET l11 = -1;
+ ELSE
+  SELECT l0 = pl0, il0 = pil0, l1 = pl1, l2 = pl2, l3 = pl3, l4 = pl4, l5 = pl5, l6 = pl6, l7 = pl7, l8 = pl8, l9 = pl9, l10 = pl10, l11 = pl11 FROM posts WHERE pid = parent;
+  IF (l1 = -1) THEN
+   SET l1 = next_id;
+  ELSEIF (l2 = -1) THEN
+   SET l2 = next_id;
+  ELSEIF (l3 = -1) THEN
+   SET l3 = next_id;
+  ELSEIF (l4 = -1) THEN
+   SET l4 = next_id;
+  ELSEIF (l5 = -1) THEN
+   SET l5 = next_id;
+  ELSEIF (l6 = -1) THEN
+   SET l6 = next_id;
+  ELSEIF (l7 = -1) THEN
+   SET l7 = next_id;
+  ELSEIF (l8 = -1) THEN
+   SET l8 = next_id;
+  ELSEIF (l9 = -1) THEN
+   SET l9 = next_id;
+  ELSEIF (l10 = -1) THEN
+   SET l10 = next_id;
+  ELSEIF (l11 = -1) THEN
+   SET l11 = next_id;
+  END IF;
+ UPDATE threads SET tposts = tposts + 1 WHERE tid = thread;
+ INSERT INTO posts (pparent, pisApproved, pisHighlighted, pisEdited, pisSpam, pisDeleted, pdate, pthread, pmessage, puser, pforum, puser_id, pforum_id, pl0, pil0, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11)
+ VALUES (parent, isApproved, isHighlighted, isEdited, isSpam, isDeleted, date, thread, message, user, forum, user_id, forum_id, l0, il0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11);
+ SELECT *, DATE_FORMAT(pdate, '%Y-%m-%d %H:%i:%s') AS date FROM posts WHERE posts.pid = LAST_INSERT_ID();
+END//
