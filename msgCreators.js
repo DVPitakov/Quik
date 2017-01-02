@@ -1,7 +1,7 @@
 var userRows = "uid, uusername, uabout, uname, uemail, uisAnonymous, usubscription_id";
 var forumRows = "fid, fname, fshort_name, fuser";
-var threadRows = "tid, DATE_FORMAT(tdate, '%Y-%m-%d %H:%i:%s') AS tdate, tforum, tisClosed, tisDeleted, tmessage, tslug, ttitle, tuser, tlikes, tdislikes, tpoints, tposts";
-var postRows = "pparent, pisApproved, pisHighlighted, pisEdited, pisSpam, pisDeleted, pid, DATE_FORMAT(pdate, '%Y-%m-%d %H:%i:%s') AS pdate, pthread, pmessage, puser, pforum, plikes, pdislikes, ppoints";
+var threadRows = "tid, DATE_FORMAT(tdate, '%Y-%m-%d %H:%i:%s') AS ttdate, tdate, tforum, tisClosed, tisDeleted, tmessage, tslug, ttitle, tuser, tlikes, tdislikes, tpoints, tposts";
+var postRows = "pparent, pisApproved, pisHighlighted, pisEdited, pisSpam, pisDeleted, pid, DATE_FORMAT(pdate, '%Y-%m-%d %H:%i:%s') AS ppdate, pdate, pthread, pmessage, puser, pforum, plikes, pdislikes, ppoints";
 
 function relatedOrder(related, enable) {
     if (enable.length < related.length) {
@@ -66,7 +66,7 @@ function ShowThread(thread, connection, callback, related) {
         var withForum = find(related, 'forum');
         if (withForum) counter++;
     }
-    var sql = `SELECT *, DATE_FORMAT(tdate, '%Y-%m-%d %H:%i:%s') AS date FROM threads`;
+    var sql = `SELECT *, DATE_FORMAT(tdate, '%Y-%m-%d %H:%i:%s') AS ttdate FROM threads`;
     if (withUser) sql += ` INNER JOIN users ON users.uemail = threads.tuser`;
     if (withForum) sql += ` INNER JOIN forums ON forums.fshort_name = threads.tforum`;
     sql += ' WHERE (tid = ?)';
@@ -250,7 +250,7 @@ function ThreadCreateOut(thread) {
     return {
         code: 0,
         response: {
-            date: thread.tdate,
+            date: thread.ttdate || thread.tdate,
             forum: thread.tforum,
             id: thread.tid,
             isClosed: thread.tisClosed,
@@ -266,7 +266,7 @@ function ThreadDetailsOut(thread) {
     return {
         code: 0,
         response: {
-            date: thread.tdate,
+            date: thread.ttdate || thread.tdate,
             forum: thread.tforum,
             id: thread.tid,
             isClosed: thread.tisClosed,
@@ -286,7 +286,7 @@ function PostsCreateOut(post) {
     return {
         code: 0,
         response: {
-            date: post.date || post.pdate,
+            date: post.ppdate || post.pdate,
             forum: post.pforum,
             id: post.pid,
             isApproved: post.pisApproved,
@@ -305,7 +305,7 @@ function PostDetailsOut(post) {
     return {
         code: 0,
         response: {
-            date: post.pdate,
+            date: post.ppdate || post.pdate,
             dislikes: post.pdislikes,
             forum: post.pforum,
             id: post.pid,
