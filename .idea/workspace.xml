@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="45803ebd-7309-4d46-970e-6cb3fdc5b28e" name="Default" comment="" />
+    <list default="true" id="45803ebd-7309-4d46-970e-6cb3fdc5b28e" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+    </list>
     <ignored path="Quik.iws" />
     <ignored path=".idea/workspace.xml" />
     <ignored path="$PROJECT_DIR$/.tmp/" />
@@ -234,15 +236,15 @@
       <workItem from="1483126518087" duration="18411000" />
       <workItem from="1483272994689" duration="29154000" />
       <workItem from="1483312162042" duration="19783000" />
-      <workItem from="1483377571161" duration="4732000" />
+      <workItem from="1483377571161" duration="5331000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="125961000" />
+    <option name="totallyTimeSpent" value="126560000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="0" width="1366" height="743" extended-state="0" />
+    <frame x="0" y="0" width="1366" height="743" extended-state="1" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.023117077" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
