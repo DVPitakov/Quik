@@ -2,9 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="45803ebd-7309-4d46-970e-6cb3fdc5b28e" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/hello.js" afterPath="$PROJECT_DIR$/hello.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/msgCreators.js" afterPath="$PROJECT_DIR$/msgCreators.js" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/D" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/index.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/myDB.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/mysqlClient.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/post.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/router.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/server.js" afterPath="" />
     </list>
     <ignored path="Quik.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -27,10 +31,10 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="hello.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="hello.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/hello.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="187">
+            <state relative-caret-position="412">
               <caret line="366" column="82" selection-start-line="366" selection-start-column="81" selection-end-line="366" selection-end-column="82" />
               <folding>
                 <element signature="e#3061#3107#0" expanded="false" />
@@ -66,7 +70,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="msgCreators.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="msgCreators.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/msgCreators.js">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="90">
@@ -238,12 +242,12 @@
       <workItem from="1483126518087" duration="18411000" />
       <workItem from="1483272994689" duration="29154000" />
       <workItem from="1483312162042" duration="19783000" />
-      <workItem from="1483377571161" duration="4567000" />
+      <workItem from="1483377571161" duration="4578000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="125796000" />
+    <option name="totallyTimeSpent" value="125807000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1366" height="743" extended-state="0" />
@@ -618,9 +622,25 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/msgCreators.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="6" column="41" selection-start-line="6" selection-start-column="41" selection-end-line="6" selection-end-column="41" />
+          <folding>
+            <element signature="n#!!block;n#find#0" expanded="false" />
+            <element signature="n#!!block;n#ErrorOut#0" expanded="false" />
+            <element signature="n#!!block;n#ShowThread#0" expanded="false" />
+            <element signature="n#!!block;n#ShowPost#0" expanded="false" />
+            <element signature="n#!!block;n#ShowUser#0" expanded="false" />
+            <element signature="n#!!block;n#PostRemoveOut#0" expanded="false" />
+            <element signature="n#!!block;n#ForumDetailsOut#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/hello.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="187">
+        <state relative-caret-position="412">
           <caret line="366" column="82" selection-start-line="366" selection-start-column="81" selection-end-line="366" selection-end-column="82" />
           <folding>
             <element signature="e#3061#3107#0" expanded="false" />
@@ -641,22 +661,6 @@
             <element signature="e#42960#43842#0" expanded="false" />
             <element signature="e#45627#47234#0" expanded="false" />
             <element signature="e#48661#49555#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/msgCreators.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="90">
-          <caret line="6" column="41" selection-start-line="6" selection-start-column="41" selection-end-line="6" selection-end-column="41" />
-          <folding>
-            <element signature="n#!!block;n#find#0" expanded="false" />
-            <element signature="n#!!block;n#ErrorOut#0" expanded="false" />
-            <element signature="n#!!block;n#ShowThread#0" expanded="false" />
-            <element signature="n#!!block;n#ShowPost#0" expanded="false" />
-            <element signature="n#!!block;n#ShowUser#0" expanded="false" />
-            <element signature="n#!!block;n#PostRemoveOut#0" expanded="false" />
-            <element signature="n#!!block;n#ForumDetailsOut#0" expanded="false" />
           </folding>
         </state>
       </provider>
