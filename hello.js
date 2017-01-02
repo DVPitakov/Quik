@@ -42,62 +42,109 @@ pool.getConnection(function (err, connection) {
     var ThreadDetailsOut = require('./msgCreators').ThreadDetailsOut;
 
     app.use(bodyParser.json());
-    function addDetailsInUserArray(ans, callback) {
+    function addDetailsInUserArray(arr, callback) {
+        if (arr.length == 0) {
+            callback(arr);
+            return;
+        }
         let promises = [];
-        ans.forEach(obj => {
-            promises.push(new Promise(function (resolve, reject) {
-                connection.query("SELECT secondUser FROM followers WHERE firstUser = ?", [obj.uemail], function (err, mas) {
-                    if (err) {
-                        console.log("111");
-                        reject();
-                    }
-                    else {
-                        obj.followers = mas.map(el => {
-                                return el.secondUser
-                            }
-                        );
-                        resolve();
-                    }
-                })
-            }.bind(obj)));
-            promises.push(new Promise(function (resolve, reject) {
-                connection.query("SELECT firstUser FROM followers WHERE secondUser = ?", [obj.uemail], function (err, mas) {
-                    if (err) {
-                        console.log("222");
-                        reject();
-                    }
-                    else {
-                        obj.following = mas.map(el => {
-                                return el.firstUser
-                            }
-                        );
-                        resolve();
-                    }
-                });
-            }.bind(obj)));
-            promises.push(new Promise(function (resolve, reject) {
-                connection.query("SELECT sthread FROM subscriptions  WHERE suser = ?", [obj.uemail], function (err, mas) {
-                    if (err) {
-                        console.log("333");
-                        reject();
-                    }
-                    else {
-                        obj.subscriptions = mas.map(el => {
-                                return el.sthread
-                            }
-                        );
-                        resolve();
-                    }
-                });
-            }.bind(obj)));
-        });
-        Promise.all(promises).then(() => {
-                callback(ans);
-            },
-            () => {
-                console.log("err230232")
+        let str = '(';
+        let nm = '(';
+        let a = 0;
+        for (a = 0; a < arr.length; a++) {
+            if (a > 0) {
+                str += ',';
+                nm += ',';
             }
-        );
+            str += arr[a].uid;
+            nm += `'${arr[a].uemail}'`;
+        }
+        str += ')';
+        nm += ')';
+        arr.forEach(el => {
+           el.following = [];
+           el.followers = [];
+           el.subscriptions = [];
+        });
+        let sql_1 = `SELECT firstUser_id, secondUser FROM followers WHERE firstUser_id IN ${str} ORDER BY firstUser_id;`;
+        let sql_2 = `SELECT secondUser_id, firstUser FROM followers WHERE secondUser_id IN ${str} ORDER BY secondUser_id;`;
+        let sql_3 = `SELECT suser, sthread FROM subscriptions  WHERE suser IN ${nm} ORDER BY suser;`;
+        connection.query(sql_1 + sql_2 + sql_3, function(err, ans){
+            if (err) throw err;
+            let j;
+            let cur_id;
+            let followers;
+            j = 0;
+            if (ans[0].length > 0) {
+                cur_id = ans[0][j].firstUser_id;
+            }
+            else {
+                cur_id = null;
+            }
+            while(cur_id != null) {
+                followers = [];
+                while (ans[0][j].firstUser_id == cur_id) {
+                    followers.push(ans[0][j].secondUser);
+                    j++;
+                    if (j >= ans[0].length) break;
+                }
+                let i = 0;
+                while (arr[i].uid != cur_id) {
+                    i++;
+                }
+                arr[i].followers = followers;
+                if (j >= ans[0].length) break;
+                cur_id = ans[0][j].firstUser_id;
+            }
+
+            j = 0;
+            if (ans[1].length > 0) {
+                cur_id = ans[1][j].secondUser_id;
+            }
+            else {
+                cur_id = null;
+            }
+            while(cur_id != null) {
+                followers = [];
+                while (ans[1][j].secondUser_id == cur_id) {
+                    followers.push(ans[1][j].firstUser);
+                    j++;
+                    if (j >= ans[1].length) break;
+                }
+                let i = 0;
+                while (arr[i].uid != cur_id) {
+                    i++;
+                }
+                arr[i].following = followers;
+                if (j >= ans[1].length) break;
+                cur_id = ans[1][j].secondUser_id;
+            }
+
+
+            j = 0;
+            if (ans[2].length > 0) {
+                cur_id = ans[2][j].suser;
+            }
+            else {
+                cur_id = null;
+            }
+            while(cur_id != null) {
+                followers = [];
+                while (ans[2][j].suser == cur_id) {
+                    followers.push(ans[2][j].sthread);
+                    j++;
+                    if (j >= ans[2].length) break;
+                }
+                let i = 0;
+                while (arr[i].uemail != cur_id) {
+                    i++;
+                }
+                arr[i].subscriptions = followers;
+                if (j >= ans[2].length) break;
+                cur_id = ans[2][j].suser;
+            }
+            callback(arr);
+        });
 
     }
 
@@ -222,7 +269,7 @@ pool.getConnection(function (err, connection) {
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.post) {
-            connection.query(`UPDATE posts SET pisDeleted = 1 WHERE  pid = ? LIMIT 1`, [data.post], function (err, ans) {
+            connection.query(`UPDATE posts SET pisDeleted = 1 WHERE  pid = ?`, [data.post], function (err, ans) {
                 if (!err) {
                     res.send(PostRemoveOut({post: data.post}));
                     console.log('1/db/api/post/remove/' + (Date.now()-a));
@@ -245,7 +292,7 @@ pool.getConnection(function (err, connection) {
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.post) {
-            connection.query(`UPDATE posts SET pisDeleted = 0 WHERE  pid = ? LIMIT 1`, [data.post], function (err, ans) {
+            connection.query(`UPDATE posts SET pisDeleted = 0 WHERE  pid = ?`, [data.post], function (err, ans) {
                 if (!err) {
                     res.send(PostRemoveOut({post: data.post}));
                     console.log('1/db/api/post/restore/' + (Date.now()-a));
@@ -347,7 +394,7 @@ pool.getConnection(function (err, connection) {
         res.set('Content-Type', 'application/json; charset=utf-8');
         var thread = req.body.thread;
         if (null != thread) {
-            var sql = connection.query(`UPDATE threads SET tisClosed = 1 WHERE tid = ? LIMIT 1`,
+            var sql = connection.query(`UPDATE threads SET tisClosed = 1 WHERE tid = ?`,
                 [thread],
                 function (err, ans) {
                     if (!err) {
@@ -523,6 +570,7 @@ pool.getConnection(function (err, connection) {
             sql = `SELECT ${postRows} FROM posts WHERE posts.pthread = ${thread} ${mysince} ORDER BY ${val}, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11 ${myLimit}`;
         }
         else if (sort == 'parent_tree') {
+            console.log("HERE TARGET TARGET TARGET TAGET");
             var mysince = '';
             if (since != null) {
                 mysince = `AND (posts.pdate >= STR_TO_DATE('${since}', '%Y-%m-%d %H:%i:%s'))`;
@@ -619,7 +667,7 @@ pool.getConnection(function (err, connection) {
             console.log("err err err err");
             return res.send(ErrorOut(3));
         }
-        let sql = `DELETE FROM subscriptions WHERE suser = ? AND sthread = ? LIMIT 1`;
+        let sql = `DELETE FROM subscriptions WHERE suser = ? AND sthread = ?`;
         connection.query(sql, [user, thread], function (err, ans) {
             if (err) {
                 console.log("err 082057");
@@ -856,19 +904,28 @@ pool.getConnection(function (err, connection) {
         if (null != forum) {
             let tables = 'posts';
             let targets = `${postRows}`;
+            //update
+            let wU =  '';
+            let wT =  '';
+            let strSince = '';
+            let strOrder = '';
+            let strLimit = '';
+            let rows = postRows;
             if (withUser) {
-                tables += ' INNER JOIN users ON users.uemail = posts.puser';
-                targets += `, ${userRows}`;
+                rows += `, ${userRows}`;
+                wU = ' INNER JOIN users ON puser_id = uid';
             }
             if (withThread) {
-                tables += ' INNER JOIN threads ON threads.tid = posts.pthread';
-                targets += `, ${threadRows}`;
+                rows += `, ${threadRows}`;
+                wT = ' INNER JOIN threads ON tid = pthread';
             }
-            var sql = `SELECT ${targets} FROM ${tables} WHERE (pforum = '${forum}')`;
-            if (null != since) sql += ` AND (pdate >= STR_TO_DATE('${since}', '%Y-%m-%d %H:%i:%s'))`;
-            sql += ` ORDER BY pdate ${order}`;
-            if (null != limit) sql += ` LIMIT ${limit}`;
-            connection.query(sql, function (err, ans) {
+            if (null != limit) strLimit = ` LIMIT ${limit}`;
+            strOrder = ` ORDER BY pdate ${order}`;
+            if (null != since) strSince = ` AND (pdate >= STR_TO_DATE('${since}', '%Y-%m-%d %H:%i:%s'))`;
+
+
+            let sql = `SELECT ${rows} FROM (SELECT * FROM posts WHERE pforum = ?${strSince}${strOrder}${strLimit}) tbl${wU}${wT}${strOrder}`;
+            console.log(connection.query(sql, [forum], function (err, ans) {
                 if (err) {
                     console.log("err 182049");
                     res.send(ErrorOut(4));
@@ -908,7 +965,7 @@ pool.getConnection(function (err, connection) {
                     });
                     return console.log('2/db/api/forum/listPosts/' + (Date.now() - a));
                 }
-            });
+            }).sql);
         }
         else {
             console.log("err 092022");
@@ -1002,17 +1059,20 @@ pool.getConnection(function (err, connection) {
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.query;
         var limit = data.limit;
-        var order = (data.order == 'asc') ? 'ASC' : 'DESC';
+        var order = (data.order == 'asc') ? 'ORDER BY puser_name ASC' : 'ORDER BY puser_name DESC';
+        var order2 =  (data.order == 'asc') ? 'ORDER BY uname ASC' : 'ORDER BY uname DESC';
         var since_id = data.since_id;
-        //
+        var since = '';
+        var limit_str = '';
+        if (null != limit) {
+            limit_str = ` LIMIT ${limit}`;
+        }
+        if (since_id) {
+            since = ` AND puser_id >= ${since_id}`
+        }
         if (null != data.forum) {
-            var sql = `SELECT DISTINCT ${userRows} FROM users INNER JOIN posts ON users.uid = posts.puser_id WHERE posts.pforum = '${data.forum}'`;
-            if (since_id) {
-                sql += ` AND users.uid >= ${since_id}`
-            }
-            sql += ` ORDER BY uname ${order}`;
-            if (null != limit) sql += ` LIMIT ${limit}`;
-            connection.query(sql, function (err, ans) {
+            var sql = `SELECT ${userRows} FROM (SELECT DISTINCT puser_id AS target, puser_name FROM posts WHERE posts.pforum = '${data.forum}' ${since} ${order} ${limit_str}) tbl INNER JOIN users ON uid = target ${order2}`;
+            console.log(connection.query(sql, function (err, ans) {
                 if (null != ans) {
                     let counter = 0;
                     addDetailsInUserArray(ans, (data) => {
@@ -1025,14 +1085,13 @@ pool.getConnection(function (err, connection) {
                         };
                         res.send(out);
                         console.log('1/db/api/forum/listUsers/' + (Date.now()-a));
-                    })
-                    ;
+                    });
                 }
                 else {
                     console.log("err 092058");
                     res.send(ErrorOut(4));
                 }
-            });
+            }).sql);
         }
         else {
             res.send(ErrorOut(3));
@@ -1055,6 +1114,7 @@ pool.getConnection(function (err, connection) {
             connection.query(insert, [data.username, data.about, data.name, data.email, data.isAnonymous], function (err, ans) {
                 if (err) {
                     res.send(ErrorOut(5));
+                    console.log('WRONG DATA for user');
                 }
                 else {
                     var select = 'SELECT * FROM users WHERE uemail = ? LIMIT 1';
@@ -1121,29 +1181,34 @@ pool.getConnection(function (err, connection) {
         var since_id = data.since_id;
         //
         if (null != data.user) {
-            var sql = `SELECT * FROM followers INNER JOIN users ON uemail = secondUser WHERE (firstUser = '${data.user}')`;
-            sql += ` ORDER BY uname ${order}`;
-            if (null != limit) sql += ` LIMIT ${limit}`;
-            connection.query(sql, function (err, ans) {
-                if (null != ans) {
-                    addDetailsInUserArray(ans, data => {
-                        var outMas = data.map(el => {
+            connection.query('SELECT uid FROM users WHERE uemail = ?', [data.user], function (err, ans1){
+                if(err) throw err;
+                console.log(JSON.stringify(ans1[0]));
+                var sql = `SELECT ${userRows} FROM followers INNER JOIN users ON uid = secondUser_id WHERE (firstUser_id = ?)`;
+                sql += ` ORDER BY uname ${order}`;
+                if (null != limit) sql += ` LIMIT ${limit}`;
+                connection.query(sql, [ans1[0].uid],function (err, ans) {
+                    if (null != ans) {
+                        addDetailsInUserArray(ans, data => {
+                            var outMas = data.map(el => {
                                 return UserDetailsOut(el).response
                             });
-                        var out = {
-                            code: 0,
-                            response: outMas
-                        };
-                        res.send(out);
-                        console.log('1/db/api/user/listFollowers/' + (Date.now()-a));
+                            var out = {
+                                code: 0,
+                                response: outMas
+                            };
+                            res.send(out);
+                            console.log('1/db/api/user/listFollowers/' + (Date.now()-a));
 
-                    });
-                }
-                else {
-                    console.log("err 181845");
-                    res.send(ErrorOut(4));
-                }
+                        });
+                    }
+                    else {
+                        console.log("err 181845");
+                        res.send(ErrorOut(4));
+                    }
+                });
             });
+
         }
         else {
             res.send(ErrorOut(3));
@@ -1161,29 +1226,29 @@ pool.getConnection(function (err, connection) {
         var since_id = data.since_id;
         //
         if (null != data.user) {
-            var sql = `SELECT * FROM followers, users WHERE (secondUser = '${data.user}') AND (uemail = firstUser)`;
-            sql += ` ORDER BY uname ${order}`;
-            if (null != limit) sql += ` LIMIT ${limit}`;
-            connection.query(sql, function (err, ans) {
-                if (null != ans) {
-                    addDetailsInUserArray(ans, data => {
-                        var outMas = data.map(el => {
-                                return UserDetailsOut(el).response
-                            }
-                            )
-                            ;
-                        var out = {
-                            code: 0,
-                            response: outMas
-                        };
-                        res.send(out);
-                        console.log('1/db/api/puser/listFollowing/' + (Date.now()-a));
-                    });
-                }
-                else {
-                    console.log("err 181845");
-                    res.send(ErrorOut(4));
-                }
+            connection.query('SELECT uid FROM users WHERE uemail = ?', [data.user], function (err, ans1){
+                var sql = `SELECT ${userRows} FROM followers INNER JOIN users ON uid = firstUser_id WHERE (secondUser_id = '${ans1[0].uid}')`;
+                sql += ` ORDER BY uname ${order}`;
+                if (null != limit) sql += ` LIMIT ${limit}`;
+                connection.query(sql, function (err, ans) {
+                    if (null != ans) {
+                        addDetailsInUserArray(ans, data => {
+                            var outMas = data.map(el => {
+                                    return UserDetailsOut(el).response
+                                });
+                            var out = {
+                                code: 0,
+                                response: outMas
+                            };
+                            res.send(out);
+                            console.log('1/db/api/puser/listFollowing/' + (Date.now()-a));
+                        });
+                    }
+                    else {
+                        console.log("err 181845");
+                        res.send(ErrorOut(4));
+                    }
+                });
             });
         }
         else {
@@ -1234,28 +1299,17 @@ pool.getConnection(function (err, connection) {
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.follower && null != data.followee) {
-            connection.query('SELECT * FROM users AS first, users AS second WHERE (first.uemail = ?) AND (second.uemail = ?) LIMIT 1',
-                [data.followee, data.follower],
-                function (err, ans) {
+            connection.query("DELETE FROM followers WHERE  firstUser = ? AND secondUser =  ? LIMIT 1;"
+                , [data.followee, data.follower], function (err, ans) {
                     if (!err) {
-                        connection.query("DELETE FROM followers WHERE  firstUser = ? AND secondUser =  ? LIMIT 1;"
-                            , [data.followee, data.follower], function (err, ans) {
-                                if (!err) {
-                                    ShowUser(data.follower, connection, function (out) {
-                                        res.send(out);
-                                        console.log('1/db/api/user/unfollow/' + (Date.now()-a));
-                                    });
-                                }
-                                else {
-                                    console.log("err 181800");
-                                    res.send(ErrorOut(4));
-                                }
-                            });
+                        ShowUser(data.follower, connection, function (out) {
+                            res.send(out);
+                            console.log('1/db/api/user/unfollow/' + (Date.now()-a));
+                        });
                     }
                     else {
-                        console.log("err 181801");
+                        console.log("err 181800");
                         res.send(ErrorOut(4));
-
                     }
                 });
         }
@@ -1271,27 +1325,17 @@ pool.getConnection(function (err, connection) {
         var data = req.body;
 
         if (null != data.about && null != data.user && null != data.name) {
-            connection.query(`SELECT * FROM users WHERE (uemail = ?) LIMIT 1`,
-                [data.user],
-                function (err, ans) {
+            connection.query('UPDATE users SET uname = ?, uabout = ? WHERE users.uemail = ?'
+                , [data.name, data.about, data.user]
+                , function (err, ans) {
                     if (!err) {
-                        connection.query('UPDATE users SET uname = ?, uabout = ? WHERE users.uemail = ? LIMIT 1'
-                            , [data.name, data.about, data.user]
-                            , function (err, ans) {
-                                if (!err) {
-                                    ShowUser(data.user, connection, function (hoho) {
-                                        res.send(JSON.stringify(hoho));
-                                        console.log('1/db/api/user/updateProfile/' + (Date.now()-a));
-                                    });
-                                }
-                                else {
-                                    console.log('err 180127');
-                                    res.send(ErrorOut(4));
-                                }
-                            });
+                        ShowUser(data.user, connection, function (hoho) {
+                            res.send(JSON.stringify(hoho));
+                            console.log('1/db/api/user/updateProfile/' + (Date.now()-a));
+                        });
                     }
                     else {
-                        console.log('err 180128');
+                        console.log('err 180127');
                         res.send(ErrorOut(4));
                     }
                 });

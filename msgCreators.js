@@ -56,7 +56,7 @@ function ErrorOut(code, response) {
         code: code || 4,
         response: response || "error message"
     };
-};
+}
 
 function ShowThread(thread, connection, callback, related) {
     if (null != related) {
@@ -67,8 +67,8 @@ function ShowThread(thread, connection, callback, related) {
         if (withForum) counter++;
     }
     var sql = `SELECT *, DATE_FORMAT(tdate, '%Y-%m-%d %H:%i:%s') AS date FROM threads`;
-    if (withUser) sql += ` INNER JOIN users ON users.uid = threads.tuser_id`;
-    if (withForum) sql += ` INNER JOIN forums ON forums.fid = threads.tforum_id`;
+    if (withUser) sql += ` INNER JOIN users ON users.uemail = threads.tuser`;
+    if (withForum) sql += ` INNER JOIN forums ON forums.fshort_name = threads.tforum`;
     sql += ' WHERE (tid = ?)';
     sql += ' LIMIT 1';
     connection.query(sql,
@@ -114,7 +114,7 @@ function ShowPost(post, connection, callback, related) {
     sql += `, DATE_FORMAT(pdate, '%Y-%m-%d %H:%i:%s') AS ppdate FROM posts`;
     if (withUser) sql += ` INNER JOIN users ON users.uid = posts.puser_id`;
     if (withThread) sql += ` INNER JOIN threads ON threads.tid = posts.pthread`;
-    if (withForum) sql += ` INNER JOIN forums ON forums.fid = posts.pforum_id`;
+    if (withForum) sql += ` INNER JOIN forums ON forums.fshort_name = posts.pforum`;
     sql += ' WHERE (pid = ?)';
     sql += ' LIMIT 1';
     connection.query(sql, [post], function (err, ans) {
@@ -146,34 +146,32 @@ function ShowPost(post, connection, callback, related) {
 }
 
 function ShowUser(email, connection, callback) {
-    connection.query('SELECT * FROM users WHERE users.uemail = ? LIMIT 1;', [email], function (err, usr) {
-        if (err) throw err;
-        connection.query('SELECT * FROM followers INNER JOIN users ON secondUser_id = users.uid WHERE (firstUser_id = ?);' +
+    connection.query(`SELECT * FROM users WHERE uemail = ?`, [email], function(err, ans1){
+        connection.query(`SELECT * FROM followers INNER JOIN users ON secondUser_id = users.uid WHERE (firstUser_id = ?);` +
             'SELECT * FROM followers, users WHERE (firstUser_id = users.uid) AND secondUser_id = ?;' +
             'SELECT sthread FROM subscriptions WHERE suser = ?;'
-            , [usr[0].uid, usr[0].uid, email], function (err, ans) {
-            if (!err) {
-                var curUser = usr[0];
-                if (null != curUser) {
-                    curUser.followers = ans[0].map(el => {
-                        return el.secondUser;
-                    });
-                    curUser.following = ans[1].map(el => {
-                        return el.firstUser;
-                    });
-                    curUser.subscriptions = ans[2].map(el => {
-                        return el.sthread;
-                    });
-                    return callback(UserDetailsOut(curUser));
+            , [ans1[0].uid, ans1[0].uid, email], function (err, ans) {
+                if (!err) {
+                    var curUser = ans1[0];
+                    if (null != curUser) {
+                        curUser.followers = ans[0].map(el => {
+                            return el.secondUser;
+                        });
+                        curUser.following = ans[1].map(el => {
+                            return el.firstUser;
+                        });
+                        curUser.subscriptions = ans[2].map(el => {
+                            return el.sthread;
+                        });
+                        return callback(UserDetailsOut(curUser));
+                    }
+                    else {
+                        return callback(ErrorOut(3));
+                    }
                 }
                 else {
-                    return callback(ErrorOut(3));
+                    console.log("err 180133");
                 }
-            }
-            else {
-                console.log("err 180133");
-            }
-
         });
     });
 

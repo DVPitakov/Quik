@@ -4,11 +4,10 @@ uid INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
 uusername CHAR(60) DEFAULT NULL,
 uabout TEXT,
 uname CHAR(60) DEFAULT NULL,
-uemail CHAR(60) NOT NULL UNIQUE,
+uemail CHAR(30) NOT NULL UNIQUE,
 uisAnonymous BOOL DEFAULT false,
 usubscription_id INT
 );
-CREATE INDEX
 
 CREATE TABLE forums
 (
@@ -16,11 +15,8 @@ fid INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
 fname CHAR(60)  UNIQUE NOT NULL,
 fshort_name CHAR(60) UNIQUE NOT NULL,
 fuser CHAR(60) NOT NULL,
-fuser_id INT NOT NULL,
 FOREIGN KEY (fuser) REFERENCES users(uemail) ON DELETE CASCADE
 );
-CREATE INDEX fuser_id ON forums(fuser_id);
-
 
 CREATE TABLE threads
 (
@@ -32,93 +28,18 @@ tisDeleted BOOL DEFAULT false,
 tmessage TEXT NOT NULL,
 tslug TEXT NOT NULL,
 ttitle TEXT NOT NULL,
-tuser CHAR(60) NOT NULL,
+tuser CHAR(30) NOT NULL,
 tlikes INT DEFAULT 0,
 tdislikes INT DEFAULT 0,
 tpoints INT DEFAULT 0,
 tposts INT DEFAULT 0,
-tuser_id INT NOT NULL,
-tforum_id INT NOT NULL,
 FOREIGN KEY (tuser) REFERENCES users(uemail) ON DELETE CASCADE,
 FOREIGN KEY (tforum) REFERENCES forums(fshort_name) ON DELETE CASCADE
 );
 CREATE INDEX tdate ON threads(tdate);
-CREATE INDEX tuser_id ON threads(tuser_id);
-CREATE INDEX tforum_id ON threads(tforum_id);
+CREATE INDEX tuser_tdate ON threads(tuser, tdate);
+CREATE INDEX tforum_tdate ON threads(tforum, tdate);
 
-CREATE TABLE posts
-(
-pparent INT(8),
-pisApproved BOOL DEFAULT false,
-pisHighlighted BOOL DEFAULT false,
-pisEdited BOOL DEFAULT false,
-pisSpam BOOL DEFAULT false,
-pisDeleted BOOL DEFAULT false,
-pid INT(8) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-pdate DATETIME NOT NULL,
-pthread INT NOT NULL,
-pmessage TEXT NOT NULL,
-puser CHAR(60) NOT NULL,
-pforum CHAR(60) NOT NULL,
-plikes INT NOT NULL DEFAULT 0,
-pdislikes INT NOT NULL DEFAULT 0,
-ppoints INT NOT NULL DEFAULT 0,
-puser_id INT NOT NULL,
-pforum_id INT NOT NULL,
-FOREIGN KEY (puser) REFERENCES users(uemail) ON DELETE CASCADE,
-FOREIGN KEY (pthread) REFERENCES threads(tid) ON DELETE CASCADE,
-FOREIGN KEY (pforum) REFERENCES forums(fshort_name) ON DELETE CASCADE,
-postpath CHAR(136) NOT NULL,
-ipath CHAR(136) NOT NULL
-);
-
-CREATE INDEX postpath ON posts(postpath);
-CREATE INDEX ipath ON posts(ipath);
-CREATE INDEX pdate ON posts(pdate);
-CREATE INDEX pforum_pdate ON posts(pforum, pdate);
-CREATE INDEX pthread_pdate ON posts(pthread, pdate);
-CREATE INDEX puser_pdate ON posts(puser, pdate);
-CREATE INDEX pforum_id_pdate ON posts(pforum_id, pdate);
-CREATE INDEX puser_id_pdate ON posts(puser_id, pdate);
-
-DELIMITER //
-CREATE PROCEDURE posts_insert_before(
- IN parent INT(8),
- IN isApproved BOOL,
- IN isHighlighted BOOL,
- IN isEdited BOOL,
- IN isSpam BOOL,
- IN isDeleted BOOL,
- IN date DATETIME,
- IN thread INT,
- IN message TEXT,
- IN user CHAR(60),
- IN forum CHAR(60)
-)
-BEGIN
- DECLARE str CHAR(136);
- DECLARE istr CHAR(136);
- DECLARE next_id INT;
- DECLARE user_id INT;
- DECLARE forum_id INT;
- SET user_id = (SELECT uid FROM users WHERE uemail = user LIMIT 1);
- SET forum_id = (SELECT fid FROM forums WHERE fshort_name = forum LIMIT 1);
- SET next_id = (SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='posts');
- IF parent IS NULL THEN
-  SET str = LPAD(next_id,8,0);
-  SET istr = LPAD(99999999 - next_id,8,9);
- ELSE
-  SET str = (SELECT postpath FROM posts WHERE pid = parent);
-  SET str = CONCAT(str, LPAD(next_id,8,0));
-  SET istr = (SELECT ipath FROM posts WHERE pid = parent);
-  SET istr = CONCAT(istr, LPAD(next_id,8,0));
- END IF;
- UPDATE threads SET tposts = tposts + 1 WHERE tid = thread;
- INSERT INTO posts (pparent, pisApproved, pisHighlighted, pisEdited, pisSpam, pisDeleted, pdate, pthread, pmessage, puser, pforum, postpath, ipath, puser_id, pforum_id) VALUES (parent, isApproved, isHighlighted, isEdited, isSpam, isDeleted, date, thread, message, user, forum, str, istr, user_id, forum_id);
- SELECT *, DATE_FORMAT(pdate, '%Y-%m-%d %H:%i:%s') AS date FROM posts WHERE posts.pid = LAST_INSERT_ID();
-END//
-
-//NEW VERSION
 CREATE TABLE posts
 (
 pid INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -144,13 +65,13 @@ pisDeleted BOOL DEFAULT false,
 pdate DATETIME NOT NULL,
 pthread INT NOT NULL,
 pmessage TEXT NOT NULL,
-puser CHAR(60) NOT NULL,
+puser CHAR(30) NOT NULL,
 pforum CHAR(60) NOT NULL,
 plikes INT NOT NULL DEFAULT 0,
 pdislikes INT NOT NULL DEFAULT 0,
 ppoints INT NOT NULL DEFAULT 0,
 puser_id INT NOT NULL,
-pforum_id INT NOT NULL,
+puser_name CHAR(60),
 FOREIGN KEY (puser) REFERENCES users(uemail) ON DELETE CASCADE,
 FOREIGN KEY (pthread) REFERENCES threads(tid) ON DELETE CASCADE,
 FOREIGN KEY (pforum) REFERENCES forums(fshort_name) ON DELETE CASCADE
@@ -159,10 +80,17 @@ CREATE INDEX pdate ON posts(pdate);
 CREATE INDEX pforum_pdate ON posts(pforum, pdate);
 CREATE INDEX pthread_pdate ON posts(pthread, pdate);
 CREATE INDEX puser_pdate ON posts(puser, pdate);
-CREATE INDEX pforum_id_pdate ON posts(pforum_id, pdate);
 CREATE INDEX puser_id_pdate ON posts(puser_id, pdate);
-CREATE INDEX pl0_11 ON posts(pl0, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11);
-CREATE INDEX pil0_11 ON posts(pil0, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11);
+CREATE INDEX puser_id_pforum_puser_name ON posts(puser_id, pforum, puser_name);
+CREATE INDEX pforum_puser_name ON posts(pforum, puser_name);
+
+//!!MAIN!!
+CREATE INDEX pl0 ON posts(pl0);
+CREATE INDEX pil0 ON posts(pil0);
+CREATE INDEX pthread_pl0_11 ON posts(pthread, pl0, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11);
+CREATE INDEX pthread_pil0_11 ON posts(pthread, pil0, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11);
+//!!MAIN!!
+
 DELIMITER //
 CREATE PROCEDURE posts_insert_before(
  IN parent INT(8),
@@ -174,7 +102,7 @@ CREATE PROCEDURE posts_insert_before(
  IN date DATETIME,
  IN thread INT,
  IN message TEXT,
- IN user CHAR(60),
+ IN user CHAR(30),
  IN forum CHAR(60)
 )
 BEGIN
@@ -193,9 +121,8 @@ BEGIN
  DECLARE l11 INT;
  DECLARE next_id INT;
  DECLARE user_id INT;
- DECLARE forum_id INT;
- SET user_id = (SELECT uid FROM users WHERE uemail = user LIMIT 1);
- SET forum_id = (SELECT fid FROM forums WHERE fshort_name = forum LIMIT 1);
+ DECLARE user_name CHAR(60);
+ SELECT uid, uname INTO user_id, user_name FROM users WHERE uemail = user;
  SET next_id = (SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='posts');
  IF parent IS NULL THEN
   SET l0 = next_id;
@@ -227,8 +154,8 @@ BEGIN
   END IF;
  END IF;
  UPDATE threads SET tposts = tposts + 1 WHERE tid = thread;
- INSERT INTO posts (pparent, pisApproved, pisHighlighted, pisEdited, pisSpam, pisDeleted, pdate, pthread, pmessage, puser, pforum, puser_id, pforum_id, pl0, pil0, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11)
- VALUES (parent, isApproved, isHighlighted, isEdited, isSpam, isDeleted, date, thread, message, user, forum, user_id, forum_id, l0, il0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11);
+ INSERT INTO posts (pparent, pisApproved, pisHighlighted, pisEdited, pisSpam, pisDeleted, pdate, pthread, pmessage, puser, pforum, puser_id, puser_name, pl0, pil0, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11)
+ VALUES (parent, isApproved, isHighlighted, isEdited, isSpam, isDeleted, date, thread, message, user, forum, user_id, user_name, l0, il0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11);
  SELECT *, DATE_FORMAT(pdate, '%Y-%m-%d %H:%i:%s') AS date FROM posts WHERE posts.pid = LAST_INSERT_ID();
 END//
 
@@ -238,25 +165,27 @@ END//
 CREATE TABLE subscriptions
 (
  sid INT(6) NOT NULL AUTO_INCREMENT PRIMARY KEY,
- suser CHAR(60) DEFAULT NULL,
+ suser CHAR(30) NOT NULL,
  sthread INT NOT NULL,
  FOREIGN KEY (suser) REFERENCES users(uemail) ON DELETE CASCADE,
  FOREIGN KEY (sthread) REFERENCES threads(tid) ON DELETE CASCADE
 );
+
 CREATE INDEX suserSthread ON subscriptions(suser, sthread);
 
 CREATE TABLE followers
 (
 id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-firstUser CHAR(60) NOT NULL,
-secondUser CHAR(60) NOT NULL,
+firstUser CHAR(30) NOT NULL,
+secondUser CHAR(30) NOT NULL,
 firstUser_id INT NOT NULL,
 secondUser_id INT NOT NULL,
-FOREIGN KEY (firstUser) REFERENCES users(uemail) ON DELETE CASCADE,
-FOREIGN KEY (secondUser) REFERENCES users(uemail) ON DELETE CASCADE
+FOREIGN KEY (firstUser_id) REFERENCES users(uid) ON DELETE CASCADE,
+FOREIGN KEY (secondUser_id) REFERENCES users(uid) ON DELETE CASCADE
 );
 CREATE INDEX firstSecondUser ON followers(firstUser_id, secondUser_id);
 CREATE INDEX secondFirstUser ON followers(secondUser_id, firstUser_id);
+CREATE INDEX firstSecond ON followers(firstUser, secondUser);
 
 DELIMITER //
 CREATE TRIGGER followers_insert_before BEFORE INSERT ON followers
@@ -264,21 +193,6 @@ FOR EACH ROW
 BEGIN
  SET NEW.firstUser_id = (SELECT uid FROM users WHERE uemail = NEW.firstUser LIMIT 1);
  SET NEW.secondUser_id = (SELECT uid FROM users WHERE uemail = NEW.secondUser LIMIT 1);
-END//
-
-DELIMITER //
-CREATE TRIGGER forums_insert BEFORE INSERT ON forums
-FOR EACH ROW
-BEGIN
- SET NEW.fuser_id = (SELECT uid FROM users WHERE uemail = NEW.fuser LIMIT 1);
-END//
-
-DELIMITER //
-CREATE TRIGGER threads_insert_before BEFORE INSERT ON threads
-FOR EACH ROW
-BEGIN
- SET NEW.tuser_id = (SELECT uid FROM users WHERE uemail = NEW.tuser LIMIT 1);
- SET NEW.tforum_id = (SELECT fid FROM forums WHERE fshort_name = NEW.tforum LIMIT 1);
 END//
 
 DELIMITER //
@@ -291,12 +205,23 @@ ELSEIF OLD.pisDeleted = 1 AND NEW.pisDeleted = 0 THEN
  UPDATE threads SET tposts = tposts + 1 WHERE tid = NEW.pthread;
 END IF;
 END//
+
+
+
+DELIMITER //
+CREATE TRIGGER users_update AFTER UPDATE ON users
+FOR EACH ROW
+BEGIN
+ IF NEW.uname <=> OLD.uname THEN
+  UPDATE posts SET puser_name = NEW.uname WHERE puser_id = NEW.uid;
+ END IF;
+END//
        
 DELIMITER //
 CREATE PROCEDURE votePost (IN post INT,IN vote BOOL)
 BEGIN
  IF vote THEN
- UPDATE posts SET plikes = plikes + 1, ppoints = ppoints + 1 WHERE posts.pid = post LIMIT 1;
+  UPDATE posts SET plikes = plikes + 1, ppoints = ppoints + 1 WHERE posts.pid = post LIMIT 1;
  ELSE
   UPDATE posts SET pdislikes = pdislikes + 1, ppoints = ppoints - 1 WHERE posts.pid = post; 
  END IF;
@@ -310,7 +235,7 @@ BEGIN
  IF vote THEN
   UPDATE threads SET tlikes = tlikes + 1, tpoints = tpoints + 1 WHERE tid = thread; 
  ELSE
- UPDATE threads SET tdislikes = tdislikes + 1, tpoints = tpoints - 1 WHERE tid = thread; 
+  UPDATE threads SET tdislikes = tdislikes + 1, tpoints = tpoints - 1 WHERE tid = thread;
  END IF;
   SELECT tid, DATE_FORMAT(tdate, '%Y-%m-%d %H:%i:%s') AS tdate, tforum, tisClosed, tisDeleted, tmessage, tslug, ttitle, tuser, tlikes, tdislikes, tpoints
   FROM threads WHERE tid = thread;
