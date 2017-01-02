@@ -16,7 +16,7 @@ var pool = mysql.createPool({
 //
 pool.getConnection(function (err, connection) {
 
-    connection.query('USE forum;', function (err, data, fields) {
+    connection.query('USE forumt;', function (err, data, fields) {
     });
 
     var ForumCreateOut = require('./msgCreators').ForumCreateOut;

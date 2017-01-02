@@ -212,9 +212,7 @@ DELIMITER //
 CREATE TRIGGER users_update AFTER UPDATE ON users
 FOR EACH ROW
 BEGIN
- IF NEW.uname <=> OLD.uname THEN
   UPDATE posts SET puser_name = NEW.uname WHERE puser_id = NEW.uid;
- END IF;
 END//
        
 DELIMITER //
