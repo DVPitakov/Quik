@@ -1,15 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="45803ebd-7309-4d46-970e-6cb3fdc5b28e" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/D" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/index.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/myDB.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/mysqlClient.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/post.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/router.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/server.js" afterPath="" />
-    </list>
+    <list default="true" id="45803ebd-7309-4d46-970e-6cb3fdc5b28e" name="Default" comment="" />
     <ignored path="Quik.iws" />
     <ignored path=".idea/workspace.xml" />
     <ignored path="$PROJECT_DIR$/.tmp/" />
@@ -34,8 +26,8 @@
       <file leaf-file-name="hello.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/hello.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="412">
-              <caret line="366" column="82" selection-start-line="366" selection-start-column="81" selection-end-line="366" selection-end-column="82" />
+            <state relative-caret-position="187">
+              <caret line="373" column="38" selection-start-line="373" selection-start-column="27" selection-end-line="373" selection-end-column="38" />
               <folding>
                 <element signature="e#3061#3107#0" expanded="false" />
                 <element signature="e#3715#3780#0" expanded="false" />
@@ -242,12 +234,12 @@
       <workItem from="1483126518087" duration="18411000" />
       <workItem from="1483272994689" duration="29154000" />
       <workItem from="1483312162042" duration="19783000" />
-      <workItem from="1483377571161" duration="4578000" />
+      <workItem from="1483377571161" duration="4732000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="125807000" />
+    <option name="totallyTimeSpent" value="125961000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1366" height="743" extended-state="0" />
@@ -640,8 +632,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/hello.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="412">
-          <caret line="366" column="82" selection-start-line="366" selection-start-column="81" selection-end-line="366" selection-end-column="82" />
+        <state relative-caret-position="187">
+          <caret line="373" column="38" selection-start-line="373" selection-start-column="27" selection-end-line="373" selection-end-column="38" />
           <folding>
             <element signature="e#3061#3107#0" expanded="false" />
             <element signature="e#3715#3780#0" expanded="false" />
