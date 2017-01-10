@@ -135,12 +135,10 @@ function ShowPost(post, connection, callback, related) {
             }
             else {
                 callback(ErrorOut(1));
-                console.log("err301624");
             }
         }
         else {
             callback(ErrorOut(4));
-            console.log("err301625");
         }
     });
 }

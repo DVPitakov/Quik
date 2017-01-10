@@ -16,7 +16,7 @@ var pool = mysql.createPool({
 //
 pool.getConnection(function (err, connection) {
 
-    connection.query('USE forumt;', function (err, data, fields) {
+    connection.query('USE forum2;', function (err, data, fields) {
     });
 
     var ForumCreateOut = require('./msgCreators').ForumCreateOut;
@@ -42,116 +42,11 @@ pool.getConnection(function (err, connection) {
     var ThreadDetailsOut = require('./msgCreators').ThreadDetailsOut;
 
     app.use(bodyParser.json());
-    function addDetailsForUser(arr, path, callback) {
-        if (arr.length == 0) {
-            callback(arr);
-            return;
-        }
-        let promises = [];
-        let str = '(';
-        let nm = '(';
-        let a = 0;
-        for (a = 0; a < arr.length; a++) {
-            if (a > 0) {
-                str += ',';
-                nm += ',';
-            }
-            str += arr[a].uid;
-            nm += `'${arr[a].uemail}'`;
-        }
-        str += ')';
-        nm += ')';
-        arr.forEach(el => {
-            el[path].following = [];
-            el[path].followers = [];
-            el[path].subscriptions = [];
-        });
-        let sql_1 = `SELECT firstUser_id, secondUser FROM followers WHERE firstUser_id IN ${str} ORDER BY firstUser_id;`;
-        let sql_2 = `SELECT secondUser_id, firstUser FROM followers WHERE secondUser_id IN ${str} ORDER BY secondUser_id;`;
-        let sql_3 = `SELECT suser, sthread FROM subscriptions  WHERE suser IN ${nm} ORDER BY suser;`;
-        connection.query(sql_1 + sql_2 + sql_3, function(err, ans){
-            if (err) throw err;
-            let j;
-            let cur_id;
-            let followers;
-            j = 0;
-            if (ans[0].length > 0) {
-                cur_id = ans[0][j].firstUser_id;
-            }
-            else {
-                cur_id = null;
-            }
-            while(cur_id != null) {
-                followers = [];
-                while (ans[0][j].firstUser_id == cur_id) {
-                    followers.push(ans[0][j].secondUser);
-                    j++;
-                    if (j >= ans[0].length) break;
-                }
-                let i = 0;
-                while (arr[i].uid != cur_id) {
-                    i++;
-                }
-                arr[i][path].followers = followers;
-                if (j >= ans[0].length) break;
-                cur_id = ans[0][j].firstUser_id;
-            }
-
-            j = 0;
-            if (ans[1].length > 0) {
-                cur_id = ans[1][j].secondUser_id;
-            }
-            else {
-                cur_id = null;
-            }
-            while(cur_id != null) {
-                followers = [];
-                while (ans[1][j].secondUser_id == cur_id) {
-                    followers.push(ans[1][j].firstUser);
-                    j++;
-                    if (j >= ans[1].length) break;
-                }
-                let i = 0;
-                while (arr[i].uid != cur_id) {
-                    i++;
-                }
-                arr[i][path].following = followers;
-                if (j >= ans[1].length) break;
-                cur_id = ans[1][j].secondUser_id;
-            }
-
-
-            j = 0;
-            if (ans[2].length > 0) {
-                cur_id = ans[2][j].suser;
-            }
-            else {
-                cur_id = null;
-            }
-            while(cur_id != null) {
-                followers = [];
-                while (ans[2][j].suser == cur_id) {
-                    followers.push(ans[2][j].sthread);
-                    j++;
-                    if (j >= ans[2].length) break;
-                }
-                let i = 0;
-                while (arr[i].uemail != cur_id) {
-                    i++;
-                }
-                arr[i][path].subscriptions = followers;
-                if (j >= ans[2].length) break;
-                cur_id = ans[2][j].suser;
-            }
-            callback(arr);
-        });
-    }
     function addDetailsInUserArray(arr, callback) {
         if (arr.length == 0) {
             callback(arr);
             return;
         }
-        let promises = [];
         let str = '(';
         let nm = '(';
         let a = 0;
@@ -187,16 +82,17 @@ pool.getConnection(function (err, connection) {
             }
             while(cur_id != null) {
                 followers = [];
-                while (ans[0][j].firstUser_id == cur_id) {
+                while ((j < ans[0].length) && (ans[0][j].firstUser_id == cur_id)) {
                     followers.push(ans[0][j].secondUser);
                     j++;
-                    if (j >= ans[0].length) break;
                 }
                 let i = 0;
-                while (arr[i].uid != cur_id) {
+                while (i != arr.length) {
+                    if (cur_id == arr[i].uid) {
+                        arr[i].followers = followers;
+                    }
                     i++;
                 }
-                arr[i].followers = followers;
                 if (j >= ans[0].length) break;
                 cur_id = ans[0][j].firstUser_id;
             }
@@ -210,40 +106,40 @@ pool.getConnection(function (err, connection) {
             }
             while(cur_id != null) {
                 followers = [];
-                while (ans[1][j].secondUser_id == cur_id) {
+                while ((j < ans[1].length) && (ans[1][j].secondUser_id == cur_id)) {
                     followers.push(ans[1][j].firstUser);
                     j++;
-                    if (j >= ans[1].length) break;
                 }
                 let i = 0;
-                while (arr[i].uid != cur_id) {
+                while (i != arr.length) {
+                    if (cur_id == arr[i].uid) {
+                        arr[i].following = followers;
+                    }
                     i++;
                 }
-                arr[i].following = followers;
                 if (j >= ans[1].length) break;
                 cur_id = ans[1][j].secondUser_id;
             }
-
-
             j = 0;
             if (ans[2].length > 0) {
-                cur_id = ans[2][j].suser;
+                cur_id = ans[2][0].suser;
             }
             else {
                 cur_id = null;
             }
             while(cur_id != null) {
                 followers = [];
-                while (ans[2][j].suser == cur_id) {
+                while ((j < ans[2].length) && (ans[2][j].suser == cur_id)) {
                     followers.push(ans[2][j].sthread);
                     j++;
-                    if (j >= ans[2].length) break;
                 }
                 let i = 0;
-                while (arr[i].uemail != cur_id) {
+                while (i != arr.length) {
+                    if (cur_id == arr[i].uemail) {
+                        arr[i].subscriptions = followers;
+                    }
                     i++;
                 }
-                arr[i].subscriptions = followers;
                 if (j >= ans[2].length) break;
                 cur_id = ans[2][j].suser;
             }
@@ -264,10 +160,10 @@ pool.getConnection(function (err, connection) {
                     {
                         code: 0,
                         response: {
-                            users: ans[0].user,
-                            threads: ans[0].thread,
-                            forums: ans[0].forum,
-                            posts: ans[0].post || 0
+                            user: ans[0].user,
+                            thread: ans[0].thread,
+                            forum: ans[0].forum,
+                            post: ans[0].post || 0
                         }
                     });
             }
@@ -703,9 +599,6 @@ pool.getConnection(function (err, connection) {
         let sql = `INSERT INTO subscriptions (suser, sthread) VALUES (?, ?)`;
         connection.query(sql, [user, thread], function (err, ans) {
             if (err) {
-                console.log("err 061548");
-                console.log(err);
-                console.log(sql);
                 res.send(ErrorOut(4));
             }
             else {
@@ -1069,15 +962,14 @@ pool.getConnection(function (err, connection) {
                         data.forEach(el => {
                             el.tuser = UserDetailsOut(el).response;
                         });
-                        return res.send({
+                        let out = {
                             code: 0,
-                            response: ansArr.map(el => {
+                            response: data.map(el => {
                                 return ThreadDetailsOut(el).response
                             })
-                        });
-
-                    })
-                    ;
+                        };
+                        return res.send(out);
+                    });
                 }
                 else {
                     return res.send({
@@ -1153,7 +1045,6 @@ pool.getConnection(function (err, connection) {
             connection.query(insert, [data.username, data.about, data.name, data.email, data.isAnonymous], function (err, ans) {
                 if (err) {
                     res.send(ErrorOut(5));
-                    console.log('WRONG DATA for user');
                 }
                 else {
                     var select = 'SELECT * FROM users WHERE uemail = ? LIMIT 1';
@@ -1324,7 +1215,7 @@ pool.getConnection(function (err, connection) {
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.follower && null != data.followee) {
-            connection.query("DELETE FROM followers WHERE  firstUser = ? AND secondUser =  ? LIMIT 1;"
+            connection.query("DELETE FROM followers WHERE  firstUser = ? AND secondUser =  ?"
                 , [data.followee, data.follower], function (err, ans) {
                     if (!err) {
                         ShowUser(data.follower, connection, function (out) {
