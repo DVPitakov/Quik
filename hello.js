@@ -342,7 +342,7 @@ pool.getConnection(function (err, connection) {
             sql = `SELECT ${postRows} FROM posts WHERE  pthread =  ${thread}`;
         }
         if (null != since) sql += ` AND (posts.pdate >= STR_TO_DATE('${since}', '%Y-%m-%d %H:%i:%s'))`;
-        sql += ` ORDER BY pdate ${order}`;
+        sql += ` ORDER BY pdate ${order}, pid`;
         if (null != limit) sql += ` LIMIT ${limit}`;
         connection.query(sql, function (err, ans) {
             if (!err) {
@@ -520,7 +520,7 @@ pool.getConnection(function (err, connection) {
             if (null != since) {
                 sql += ` AND (posts.pdate >= STR_TO_DATE('${since}', '%Y-%m-%d %H:%i:%s'))`;
             }
-            sql += ` ORDER BY pdate ${order} `;
+            sql += ` ORDER BY pdate ${order}, pid `;
             if (null != limit) sql += ` LIMIT ${limit} `
         }
         else if (sort == 'tree') {
@@ -544,7 +544,7 @@ pool.getConnection(function (err, connection) {
                 myLimit = `LIMIT ${limit}`;
             }
             sql = `SELECT ${postRows} FROM
-        (SELECT posts.pid AS p FROM  posts WHERE posts.pparent IS NULL AND posts.pthread = ${thread} ${mysince}  ORDER BY ${val}, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11  ${myLimit} ) AS paths
+        (SELECT posts.pid AS p FROM  posts WHERE posts.pparent IS NULL AND posts.pthread = ${thread} ${mysince}  ORDER BY ${val}, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11 ${myLimit} ) AS paths
         INNER JOIN  posts ON posts.pl0 = p
         ORDER BY ${val}, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11`;
         }
@@ -861,7 +861,7 @@ pool.getConnection(function (err, connection) {
                 wT = ' INNER JOIN threads ON tid = pthread';
             }
             if (null != limit) strLimit = ` LIMIT ${limit}`;
-            strOrder = ` ORDER BY pdate ${order}`;
+            strOrder = ` ORDER BY pdate ${order}, pid`;
             if (null != since) strSince = ` AND (pdate >= STR_TO_DATE('${since}', '%Y-%m-%d %H:%i:%s'))`;
 
 
@@ -1186,7 +1186,7 @@ pool.getConnection(function (err, connection) {
         if (null != user) {
             var sql = `SELECT ${postRows} FROM posts WHERE (puser = '${user}')`;
             if (null != since) sql += ` AND (pdate > STR_TO_DATE('${since}', '%Y-%m-%d %H:%i:%s'))`;
-            sql += ` ORDER BY pdate ${order}`;
+            sql += ` ORDER BY pdate ${order}, pid`;
             if (null != limit) sql += ` LIMIT ${limit}`;
             connection.query(sql, function (err, ans) {
                 if (null != ans) {

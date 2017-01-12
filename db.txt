@@ -72,24 +72,21 @@ pdislikes INT NOT NULL DEFAULT 0,
 ppoints INT NOT NULL DEFAULT 0,
 puser_id INT NOT NULL,
 puser_name CHAR(60),
-FOREIGN KEY (puser) REFERENCES users(uemail) ON DELETE CASCADE,
+FOREIGN KEY (puser) REFERENCES users(uemail_id) ON DELETE CASCADE,
 FOREIGN KEY (pthread) REFERENCES threads(tid) ON DELETE CASCADE,
 FOREIGN KEY (pforum) REFERENCES forums(fshort_name) ON DELETE CASCADE
 );
-CREATE INDEX pdate ON posts(pdate);
-CREATE INDEX pforum_pdate ON posts(pforum, pdate);
-CREATE INDEX pthread_pdate ON posts(pthread, pdate);
-CREATE INDEX puser_pdate ON posts(puser, pdate);
-CREATE INDEX puser_id_pdate ON posts(puser_id, pdate);
+CREATE INDEX pdate_pid ON posts(pdate, pid);
+CREATE INDEX pforum_pdate_pid ON posts(pforum, pdate, pid);
+CREATE INDEX pthread_pdate_pid ON posts(pthread, pdate, pid);
+CREATE INDEX puser_pdate_pid ON posts(puser, pdate, pid);
+CREATE INDEX puser_id_pdate_pid ON posts(puser_id, pdate, pid);
 CREATE INDEX puser_id_pforum_puser_name ON posts(puser_id, pforum, puser_name);
 CREATE INDEX pforum_puser_name ON posts(pforum, puser_name);
-
-//!!MAIN!!
 CREATE INDEX pl0 ON posts(pl0);
 CREATE INDEX pil0 ON posts(pil0);
 CREATE INDEX pthread_pl0_11 ON posts(pthread, pl0, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11);
 CREATE INDEX pthread_pil0_11 ON posts(pthread, pil0, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11);
-//!!MAIN!!
 
 DELIMITER //
 CREATE PROCEDURE posts_insert_before(

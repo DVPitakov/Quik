@@ -3,8 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="45803ebd-7309-4d46-970e-6cb3fdc5b28e" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/db.txt" afterPath="$PROJECT_DIR$/db.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/hello.js" afterPath="$PROJECT_DIR$/hello.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/msgCreators.js" afterPath="$PROJECT_DIR$/msgCreators.js" />
     </list>
     <ignored path="Quik.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -27,27 +27,27 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="hello.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="hello.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/hello.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="172">
-              <caret line="969" column="26" selection-start-line="969" selection-start-column="26" selection-end-line="969" selection-end-column="26" />
+            <state relative-caret-position="82">
+              <caret line="1185" column="27" selection-start-line="1185" selection-start-column="27" selection-end-line="1185" selection-end-column="27" />
               <folding>
                 <element signature="e#486#493#0" expanded="false" />
                 <element signature="e#3035#3081#0" expanded="false" />
                 <element signature="e#3736#3801#0" expanded="false" />
                 <element signature="e#3819#3865#0" expanded="false" />
-                <element signature="e#38527#38781#0" expanded="false" />
+                <element signature="e#38541#38795#0" expanded="false" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="db.txt" pinned="false" current-in-tab="false">
+      <file leaf-file-name="db.txt" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/db.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="862">
-              <caret line="193" column="83" selection-start-line="193" selection-start-column="76" selection-end-line="193" selection-end-column="83" />
+            <state relative-caret-position="412">
+              <caret line="90" column="12" selection-start-line="90" selection-start-column="12" selection-end-line="90" selection-end-column="12" />
               <folding />
             </state>
           </provider>
@@ -79,9 +79,9 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/D" />
-        <option value="$PROJECT_DIR$/db.txt" />
         <option value="$PROJECT_DIR$/msgCreators.js" />
         <option value="$PROJECT_DIR$/hello.js" />
+        <option value="$PROJECT_DIR$/db.txt" />
       </list>
     </option>
   </component>
@@ -229,12 +229,12 @@
       <workItem from="1483989323242" duration="870000" />
       <workItem from="1484027478786" duration="2192000" />
       <workItem from="1484031095692" duration="6096000" />
-      <workItem from="1484069983090" duration="7928000" />
+      <workItem from="1484069983090" duration="10638000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="152432000" />
+    <option name="totallyTimeSpent" value="155142000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1366" height="743" extended-state="0" />
@@ -305,7 +305,7 @@
             <element signature="e#3035#3081#0" expanded="false" />
             <element signature="e#3736#3801#0" expanded="false" />
             <element signature="e#3819#3865#0" expanded="false" />
-            <element signature="e#38527#38781#0" expanded="false" />
+            <element signature="e#38541#38795#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -342,7 +342,7 @@
             <element signature="e#3035#3081#0" expanded="false" />
             <element signature="e#3736#3801#0" expanded="false" />
             <element signature="e#3819#3865#0" expanded="false" />
-            <element signature="e#38527#38781#0" expanded="false" />
+            <element signature="e#38541#38795#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -379,7 +379,7 @@
             <element signature="e#3035#3081#0" expanded="false" />
             <element signature="e#3736#3801#0" expanded="false" />
             <element signature="e#3819#3865#0" expanded="false" />
-            <element signature="e#38527#38781#0" expanded="false" />
+            <element signature="e#38541#38795#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -416,7 +416,7 @@
             <element signature="e#3035#3081#0" expanded="false" />
             <element signature="e#3736#3801#0" expanded="false" />
             <element signature="e#3819#3865#0" expanded="false" />
-            <element signature="e#38527#38781#0" expanded="false" />
+            <element signature="e#38541#38795#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -453,7 +453,7 @@
             <element signature="e#3035#3081#0" expanded="false" />
             <element signature="e#3736#3801#0" expanded="false" />
             <element signature="e#3819#3865#0" expanded="false" />
-            <element signature="e#38527#38781#0" expanded="false" />
+            <element signature="e#38541#38795#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -490,7 +490,7 @@
             <element signature="e#3035#3081#0" expanded="false" />
             <element signature="e#3736#3801#0" expanded="false" />
             <element signature="e#3819#3865#0" expanded="false" />
-            <element signature="e#38527#38781#0" expanded="false" />
+            <element signature="e#38541#38795#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -527,7 +527,7 @@
             <element signature="e#3035#3081#0" expanded="false" />
             <element signature="e#3736#3801#0" expanded="false" />
             <element signature="e#3819#3865#0" expanded="false" />
-            <element signature="e#38527#38781#0" expanded="false" />
+            <element signature="e#38541#38795#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -564,7 +564,7 @@
             <element signature="e#3035#3081#0" expanded="false" />
             <element signature="e#3736#3801#0" expanded="false" />
             <element signature="e#3819#3865#0" expanded="false" />
-            <element signature="e#38527#38781#0" expanded="false" />
+            <element signature="e#38541#38795#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -601,7 +601,7 @@
             <element signature="e#3035#3081#0" expanded="false" />
             <element signature="e#3736#3801#0" expanded="false" />
             <element signature="e#3819#3865#0" expanded="false" />
-            <element signature="e#38527#38781#0" expanded="false" />
+            <element signature="e#38541#38795#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -638,7 +638,7 @@
             <element signature="e#3035#3081#0" expanded="false" />
             <element signature="e#3736#3801#0" expanded="false" />
             <element signature="e#3819#3865#0" expanded="false" />
-            <element signature="e#38527#38781#0" expanded="false" />
+            <element signature="e#38541#38795#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -659,14 +659,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/D" />
-    <entry file="file://$PROJECT_DIR$/db.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="862">
-          <caret line="193" column="83" selection-start-line="193" selection-start-column="76" selection-end-line="193" selection-end-column="83" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/msgCreators.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="187">
@@ -684,15 +676,23 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/hello.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="172">
-          <caret line="969" column="26" selection-start-line="969" selection-start-column="26" selection-end-line="969" selection-end-column="26" />
+        <state relative-caret-position="82">
+          <caret line="1185" column="27" selection-start-line="1185" selection-start-column="27" selection-end-line="1185" selection-end-column="27" />
           <folding>
             <element signature="e#486#493#0" expanded="false" />
             <element signature="e#3035#3081#0" expanded="false" />
             <element signature="e#3736#3801#0" expanded="false" />
             <element signature="e#3819#3865#0" expanded="false" />
-            <element signature="e#38527#38781#0" expanded="false" />
+            <element signature="e#38541#38795#0" expanded="false" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/db.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="412">
+          <caret line="90" column="12" selection-start-line="90" selection-start-column="12" selection-end-line="90" selection-end-column="12" />
+          <folding />
         </state>
       </provider>
     </entry>
