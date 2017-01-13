@@ -14,6 +14,32 @@ var pool = mysql.createPool({
 });
 
 //
+function postsPidSort(posts) {
+    let curL = 0;
+    let curR = 0;
+    while(curL < posts.length) {
+        while ((curR < posts.length) && (posts[curL].date == posts[curR].date)) {
+            curR++;
+        }
+        let counter = 0;
+        let counterLimit = curR - curL - 1;
+        while (counter < counterLimit) {
+            let cur = curL + counter;
+            let min = curL;
+            while (cur < curR) {
+                if(posts[min].id > posts[cur].id) {
+                    min = cur;
+                }
+                cur++;
+            }
+            let buf = posts[curL + counter];
+            posts[curL + counter] = posts[min];
+            posts[min] = buf;
+            counter++;
+        }
+        curL = curR;
+    }
+}
 pool.getConnection(function (err, connection) {
 
     connection.query('USE forum2;', function (err, data, fields) {
@@ -342,18 +368,21 @@ pool.getConnection(function (err, connection) {
             sql = `SELECT ${postRows} FROM posts WHERE  pthread =  ${thread}`;
         }
         if (null != since) sql += ` AND (posts.pdate >= STR_TO_DATE('${since}', '%Y-%m-%d %H:%i:%s'))`;
-        sql += ` ORDER BY pdate ${order}, pid`;
+        sql += ` ORDER BY pdate ${order}`;
         if (null != limit) sql += ` LIMIT ${limit}`;
         connection.query(sql, function (err, ans) {
             if (!err) {
                 if (ans[0] == null) {
                     return res.send({code: 0, response: []});
                 }
-                return res.send({
-                    code: 0, response: ans.map(el => {
+                let out = {
+                    code: 0,
+                    response: ans.map(el => {
                         return PostDetailsOut(el).response
                     })
-                });
+                };
+                postsPidSort(out.response);
+                return res.send(out);
             }
             else {
                 console.log("err 180000");
@@ -520,7 +549,7 @@ pool.getConnection(function (err, connection) {
             if (null != since) {
                 sql += ` AND (posts.pdate >= STR_TO_DATE('${since}', '%Y-%m-%d %H:%i:%s'))`;
             }
-            sql += ` ORDER BY pdate ${order}, pid `;
+            sql += ` ORDER BY pdate ${order}`;
             if (null != limit) sql += ` LIMIT ${limit} `
         }
         else if (sort == 'tree') {
@@ -559,12 +588,14 @@ pool.getConnection(function (err, connection) {
                 res.send(ErrorOut(4));
             }
             else {
-                res.send({
+                let out = {
                     code: 0,
                     response: ans.map(el => {
                         return PostDetailsOut(el).response;
                     })
-                });
+                };
+                postsPidSort(out.response);
+                res.send(out);
             }
         })
     });
@@ -861,7 +892,7 @@ pool.getConnection(function (err, connection) {
                 wT = ' INNER JOIN threads ON tid = pthread';
             }
             if (null != limit) strLimit = ` LIMIT ${limit}`;
-            strOrder = ` ORDER BY pdate ${order}, pid`;
+            strOrder = ` ORDER BY pdate ${order}`;
             if (null != since) strSince = ` AND (pdate >= STR_TO_DATE('${since}', '%Y-%m-%d %H:%i:%s'))`;
 
 
@@ -874,7 +905,7 @@ pool.getConnection(function (err, connection) {
                 if (withForum) {
                     connection.query(`SELECT ${forumRows} FROM forums WHERE fshort_name = ?`,[forum], function (err, ans2){
                         if (err) throw err;
-                        return res.send({
+                        let out = {
                             code: 0,
                             response: ans.map(el => {
                                 if (withUser) {
@@ -886,7 +917,9 @@ pool.getConnection(function (err, connection) {
                                 }
                                 return PostDetailsOut(el).response;
                             })
-                        });
+                        };
+                        postsPidSort(out.response);
+                        return res.send(out);
                     });
                 }
                 else {
@@ -1186,7 +1219,7 @@ pool.getConnection(function (err, connection) {
         if (null != user) {
             var sql = `SELECT ${postRows} FROM posts WHERE (puser = '${user}')`;
             if (null != since) sql += ` AND (pdate > STR_TO_DATE('${since}', '%Y-%m-%d %H:%i:%s'))`;
-            sql += ` ORDER BY pdate ${order}, pid`;
+            sql += ` ORDER BY pdate ${order}`;
             if (null != limit) sql += ` LIMIT ${limit}`;
             connection.query(sql, function (err, ans) {
                 if (null != ans) {
@@ -1197,6 +1230,7 @@ pool.getConnection(function (err, connection) {
                         code: 0,
                         response: outArr
                     };
+                    postsPidSort(out.response);
                     res.send(out);
                 }
                 else {
