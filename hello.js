@@ -14,7 +14,7 @@ var pool = mysql.createPool({
 });
 
 //
-function postsPidSort(posts) {
+function idSort(posts) {
     let curL = 0;
     let curR = 0;
     while(curL < posts.length) {
@@ -42,7 +42,7 @@ function postsPidSort(posts) {
 }
 pool.getConnection(function (err, connection) {
 
-    connection.query('USE forum2;', function (err, data, fields) {
+    connection.query('USE forum;', function (err, data, fields) {
     });
 
     var ForumCreateOut = require('./msgCreators').ForumCreateOut;
@@ -381,7 +381,7 @@ pool.getConnection(function (err, connection) {
                         return PostDetailsOut(el).response
                     })
                 };
-                postsPidSort(out.response);
+                idSort(out.response);
                 return res.send(out);
             }
             else {
@@ -594,7 +594,7 @@ pool.getConnection(function (err, connection) {
                         return PostDetailsOut(el).response;
                     })
                 };
-                postsPidSort(out.response);
+                idSort(out.response);
                 res.send(out);
             }
         })
@@ -918,7 +918,7 @@ pool.getConnection(function (err, connection) {
                                 return PostDetailsOut(el).response;
                             })
                         };
-                        postsPidSort(out.response);
+                        idSort(out.response);
                         return res.send(out);
                     });
                 }
@@ -1230,7 +1230,7 @@ pool.getConnection(function (err, connection) {
                         code: 0,
                         response: outArr
                     };
-                    postsPidSort(out.response);
+                    idSort(out.response);
                     res.send(out);
                 }
                 else {

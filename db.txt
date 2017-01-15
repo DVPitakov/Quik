@@ -7,7 +7,8 @@ uname CHAR(60) DEFAULT NULL,
 uemail CHAR(30) NOT NULL UNIQUE,
 uisAnonymous BOOL DEFAULT false,
 usubscription_id INT
-);
+)
+ENGINE=MyISAM;
 
 CREATE TABLE forums
 (
@@ -16,7 +17,8 @@ fname CHAR(60)  UNIQUE NOT NULL,
 fshort_name CHAR(60) UNIQUE NOT NULL,
 fuser CHAR(60) NOT NULL,
 FOREIGN KEY (fuser) REFERENCES users(uemail) ON DELETE CASCADE
-);
+)
+ENGINE=MyISAM;
 
 CREATE TABLE threads
 (
@@ -35,7 +37,8 @@ tpoints INT DEFAULT 0,
 tposts INT DEFAULT 0,
 FOREIGN KEY (tuser) REFERENCES users(uemail) ON DELETE CASCADE,
 FOREIGN KEY (tforum) REFERENCES forums(fshort_name) ON DELETE CASCADE
-);
+)
+ENGINE=MyISAM;
 CREATE INDEX tdate ON threads(tdate);
 CREATE INDEX tuser_tdate ON threads(tuser, tdate);
 CREATE INDEX tforum_tdate ON threads(tforum, tdate);
@@ -75,7 +78,9 @@ puser_name CHAR(60),
 FOREIGN KEY (puser) REFERENCES users(uemail) ON DELETE CASCADE,
 FOREIGN KEY (pthread) REFERENCES threads(tid) ON DELETE CASCADE,
 FOREIGN KEY (pforum) REFERENCES forums(fshort_name) ON DELETE CASCADE
-);
+)
+ENGINE=MyISAM;
+
 CREATE INDEX pdate ON posts(pdate);
 CREATE INDEX pforum_pdate ON posts(pforum, pdate);
 CREATE INDEX pthread_pdate ON posts(pthread, pdate);
@@ -163,11 +168,9 @@ CREATE TABLE subscriptions
 (
  sid INT(6) NOT NULL AUTO_INCREMENT PRIMARY KEY,
  suser CHAR(30) NOT NULL,
- sthread INT NOT NULL,
- FOREIGN KEY (suser) REFERENCES users(uemail) ON DELETE CASCADE,
- FOREIGN KEY (sthread) REFERENCES threads(tid) ON DELETE CASCADE
+ sthread INT NOT NULL
 );
-
+CREATE INDEX sthread ON  subscriptions(sthread);
 CREATE INDEX suserSthread ON subscriptions(suser, sthread);
 
 CREATE TABLE followers
@@ -176,9 +179,7 @@ id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
 firstUser CHAR(30) NOT NULL,
 secondUser CHAR(30) NOT NULL,
 firstUser_id INT NOT NULL,
-secondUser_id INT NOT NULL,
-FOREIGN KEY (firstUser_id) REFERENCES users(uid) ON DELETE CASCADE,
-FOREIGN KEY (secondUser_id) REFERENCES users(uid) ON DELETE CASCADE
+secondUser_id INT NOT NULL
 );
 CREATE INDEX firstSecondUser ON followers(firstUser_id, secondUser_id);
 CREATE INDEX secondFirstUser ON followers(secondUser_id, firstUser_id);
