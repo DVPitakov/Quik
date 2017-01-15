@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="45803ebd-7309-4d46-970e-6cb3fdc5b28e" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/db.txt" afterPath="$PROJECT_DIR$/db.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/hello.js" afterPath="$PROJECT_DIR$/hello.js" />
-    </list>
+    <list default="true" id="45803ebd-7309-4d46-970e-6cb3fdc5b28e" name="Default" comment="" />
     <ignored path="Quik.iws" />
     <ignored path=".idea/workspace.xml" />
     <ignored path="$PROJECT_DIR$/.tmp/" />
@@ -27,7 +23,7 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="hello.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="hello.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/hello.js">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="345">
@@ -46,14 +42,14 @@
       <file leaf-file-name="db.txt" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/db.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="578">
-              <caret line="160" column="8" selection-start-line="160" selection-start-column="0" selection-end-line="160" selection-end-column="8" />
+            <state relative-caret-position="263">
+              <caret line="220" column="5" selection-start-line="215" selection-start-column="0" selection-end-line="237" selection-end-column="5" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="msgCreators.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="msgCreators.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/msgCreators.js">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="428">
@@ -230,12 +226,12 @@
       <workItem from="1484031095692" duration="6096000" />
       <workItem from="1484069983090" duration="11390000" />
       <workItem from="1484302411287" duration="8054000" />
-      <workItem from="1484412443101" duration="19354000" />
+      <workItem from="1484412443101" duration="20113000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="183302000" />
+    <option name="totallyTimeSpent" value="184061000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1366" height="743" extended-state="0" />
@@ -650,28 +646,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/D" />
-    <entry file="file://$PROJECT_DIR$/msgCreators.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="428">
-          <caret line="138" column="9" selection-start-line="138" selection-start-column="9" selection-end-line="138" selection-end-column="9" />
-          <folding>
-            <element signature="n#!!block;n#find#0" expanded="false" />
-            <element signature="n#!!block;n#ErrorOut#0" expanded="false" />
-            <element signature="n#!!block;n#ShowUser#0" expanded="false" />
-            <element signature="n#!!block;n#PostRemoveOut#0" expanded="false" />
-            <element signature="n#!!block;n#ForumDetailsOut#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/db.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="578">
-          <caret line="160" column="8" selection-start-line="160" selection-start-column="0" selection-end-line="160" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/hello.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="345">
@@ -682,6 +656,28 @@
             <element signature="e#4473#4538#0" expanded="false" />
             <element signature="e#4556#4602#0" expanded="false" />
             <element signature="e#39505#39759#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/db.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="263">
+          <caret line="220" column="5" selection-start-line="215" selection-start-column="0" selection-end-line="237" selection-end-column="5" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/msgCreators.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="428">
+          <caret line="138" column="9" selection-start-line="138" selection-start-column="9" selection-end-line="138" selection-end-column="9" />
+          <folding>
+            <element signature="n#!!block;n#find#0" expanded="false" />
+            <element signature="n#!!block;n#ErrorOut#0" expanded="false" />
+            <element signature="n#!!block;n#ShowUser#0" expanded="false" />
+            <element signature="n#!!block;n#PostRemoveOut#0" expanded="false" />
+            <element signature="n#!!block;n#ForumDetailsOut#0" expanded="false" />
           </folding>
         </state>
       </provider>
