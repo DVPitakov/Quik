@@ -42,7 +42,7 @@ function idSort(posts) {
 }
 pool.getConnection(function (err, connection) {
 
-    connection.query('USE forum;', function (err, data, fields) {
+    connection.query('USE isam;', function (err, data, fields) {
     });
 
     var ForumCreateOut = require('./msgCreators').ForumCreateOut;
@@ -573,7 +573,7 @@ pool.getConnection(function (err, connection) {
                 myLimit = `LIMIT ${limit}`;
             }
             sql = `SELECT ${postRows} FROM
-        (SELECT posts.pid AS p FROM  posts WHERE posts.pparent IS NULL AND posts.pthread = ${thread} ${mysince}  ORDER BY ${val}, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11 ${myLimit} ) AS paths
+        (SELECT posts.pid AS p FROM  posts WHERE posts.pl1 = -1 AND posts.pthread = ${thread} ${mysince}  ORDER BY ${val} ${myLimit} ) AS paths
         INNER JOIN  posts ON posts.pl0 = p
         ORDER BY ${val}, pl1, pl2, pl3, pl4, pl5, pl6, pl7, pl8, pl9, pl10, pl11`;
         }
@@ -809,7 +809,7 @@ pool.getConnection(function (err, connection) {
         res.set('Content-Type', 'application/json; charset=utf-8');
         var data = req.body;
         if (null != data.name && null != data.short_name && null != data.user) {
-            var ans = connection.query('INSERT INTO forums (fname, fshort_name, fuser) VALUES (?, ?, ?)',
+            connection.query('INSERT INTO forums (fname, fshort_name, fuser) VALUES (?, ?, ?)',
                 [data.name, data.short_name, data.user],
                 function (err, ans) {
                     if (!err) {
@@ -896,7 +896,7 @@ pool.getConnection(function (err, connection) {
             if (null != since) strSince = ` AND (pdate >= STR_TO_DATE('${since}', '%Y-%m-%d %H:%i:%s'))`;
 
 
-            let sql = `SELECT ${rows} FROM (SELECT * FROM posts WHERE pforum = ?${strSince}${strOrder}${strLimit}) tbl${wU}${wT}${strOrder}`;
+            let sql = `SELECT ${rows} FROM posts ${wU}${wT} WHERE pforum = ?${strSince}${strOrder}${strLimit}`;
             connection.query(sql, [forum], function (err, ans) {
                 if (err) {
                     console.log("err 182049");
@@ -1026,7 +1026,7 @@ pool.getConnection(function (err, connection) {
         var data = req.query;
         var limit = data.limit;
         var order = (data.order == 'asc') ? 'ORDER BY puser_name ASC' : 'ORDER BY puser_name DESC';
-        var order2 =  (data.order == 'asc') ? 'ORDER BY uname ASC' : 'ORDER BY uname DESC';
+        var order2 = (data.order == 'asc') ? 'ORDER BY uname ASC' : 'ORDER BY uname DESC';
         var since_id = data.since_id;
         var since = '';
         var limit_str = '';
@@ -1037,25 +1037,48 @@ pool.getConnection(function (err, connection) {
             since = ` AND puser_id >= ${since_id}`
         }
         if (null != data.forum) {
-            var sql = `SELECT ${userRows} FROM (SELECT DISTINCT puser_id AS target, puser_name FROM posts WHERE posts.pforum = '${data.forum}' ${since} ${order} ${limit_str}) tbl INNER JOIN users ON uid = target ${order2}`;
-            connection.query(sql, function (err, ans) {
-                if (null != ans) {
-                    let counter = 0;
-                    addDetailsInUserArray(ans, (data) => {
-                        var outMas = data.map(el => {
-                                return UserDetailsOut(el).response
-                            });
-                        var out = {
-                            code: 0,
-                            response: outMas
-                        };
-                        res.send(out);
+            var sql_1 = `SELECT DISTINCT puser_name, puser_id FROM posts WHERE posts.pforum = '${data.forum}'  ${order} ${limit_str}`;
+            connection.query(sql_1, function(err, ans){
+                if (err) throw err;
+                let result1 = '(';
+                let i =0;
+                if(ans.length == 0) {
+                    return res.send({
+                        code: 0,
+                        response: []
                     });
                 }
-                else {
-                    console.log("err 092058");
-                    res.send(ErrorOut(4));
+                while(i < ans.length) {
+                    if(i > 0) {
+                        result1 += ',';
+                        result1 += ans[i].puser_id;
+                    }
+                    else {
+                        result1 += ans[i].puser_id;
+                    }
+                    i++;
                 }
+                result1 += ')';
+                var sql_2 = `SELECT ${userRows} FROM users WHERE uid  IN ${result1} ${order2}`;
+                connection.query(sql_2, function(err, ans){
+                    if (null != ans) {
+                        let counter = 0;
+                        addDetailsInUserArray(ans, (data) => {
+                            var outMas = data.map(el => {
+                                return UserDetailsOut(el).response
+                            });
+                            var out = {
+                                code: 0,
+                                response: outMas
+                            };
+                            res.send(out);
+                        });
+                    }
+                    else {
+                        console.log("err 092058");
+                        res.send(ErrorOut(4));
+                    }
+                });
             });
         }
         else {
@@ -1075,7 +1098,7 @@ pool.getConnection(function (err, connection) {
         if ((null != data.username && null != data.about && null != data.name && null != data.email) || (data.isAnonymous && null != data.email)) {
             var insert = `INSERT INTO users (uusername, uabout, uname, uemail, uisAnonymous) 
 					  VALUES (?,?,?,?,?);`;
-            connection.query(insert, [data.username, data.about, data.name, data.email, data.isAnonymous], function (err, ans) {
+            connection.query(insert, [data.username || '', data.about, data.name || '', data.email, data.isAnonymous], function (err, ans) {
                 if (err) {
                     res.send(ErrorOut(5));
                 }
@@ -1140,7 +1163,8 @@ pool.getConnection(function (err, connection) {
         if (null != data.user) {
             connection.query('SELECT uid FROM users WHERE uemail = ?', [data.user], function (err, ans1){
                 if(err) throw err;
-                var sql = `SELECT ${userRows} FROM followers INNER JOIN users ON uid = secondUser_id WHERE (firstUser_id = ?)`;
+                //uid_uname
+                var sql = `SELECT ${userRows} FROM users INNER JOIN followers ON uid = secondUser_id WHERE (firstUser_id = ?)`;
                 sql += ` ORDER BY uname ${order}`;
                 if (null != limit) sql += ` LIMIT ${limit}`;
                 connection.query(sql, [ans1[0].uid],function (err, ans) {

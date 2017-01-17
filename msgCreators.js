@@ -24,8 +24,8 @@ function UserCrateOut(user) {
             email: user.uemail,
             id: user.uid,
             isAnonymous: user.uisAnonymous || false,
-            name: user.uname,
-            username: user.uusername
+            name: user.uname == '' ? null : user.uname,
+            username: user.uusername == ''? null : user.uusername
         }
     };
 }
@@ -144,7 +144,7 @@ function ShowPost(post, connection, callback, related) {
 }
 
 function ShowUser(email, connection, callback) {
-    connection.query(`SELECT * FROM users WHERE uemail = ?`, [email], function(err, ans1){
+    connection.query(`SELECT ${userRows} FROM users WHERE uemail = ?`, [email], function(err, ans1){
         connection.query(`SELECT * FROM followers INNER JOIN users ON secondUser_id = users.uid WHERE (firstUser_id = ?);` +
             'SELECT * FROM followers, users WHERE (firstUser_id = users.uid) AND secondUser_id = ?;' +
             'SELECT sthread FROM subscriptions WHERE suser = ?;'
@@ -221,9 +221,9 @@ function UserDetailsOut(user) {
             following: user.following || [],
             id: user.uid,
             isAnonymous: user.uisAnonymous || false,
-            name: user.uname,
+            name: user.uname == '' ? null : user.uname,
             subscriptions: user.subscriptions || [],
-            username: user.uusername
+            username: user.uusername == '' ? null : user.uusername
         }
     };
 }

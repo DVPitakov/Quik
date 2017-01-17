@@ -1,9 +1,9 @@
 CREATE TABLE users
 (
 uid INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-uusername CHAR(60) DEFAULT NULL,
+uusername CHAR(30) NOT NULL DEFAULT '',
 uabout TEXT,
-uname CHAR(60) DEFAULT NULL,
+uname CHAR(50) NOT NULL DEFAULT '',
 uemail CHAR(30) NOT NULL UNIQUE,
 uisAnonymous BOOL DEFAULT false,
 usubscription_id INT
@@ -13,9 +13,9 @@ ENGINE=MyISAM;
 CREATE TABLE forums
 (
 fid INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-fname CHAR(60)  UNIQUE NOT NULL,
-fshort_name CHAR(60) UNIQUE NOT NULL,
-fuser CHAR(60) NOT NULL,
+fname CHAR(50)  UNIQUE NOT NULL,
+fshort_name CHAR(30) UNIQUE NOT NULL,
+fuser CHAR(30) NOT NULL,
 FOREIGN KEY (fuser) REFERENCES users(uemail) ON DELETE CASCADE
 )
 ENGINE=MyISAM;
@@ -24,17 +24,17 @@ CREATE TABLE threads
 (
 tid INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
 tdate DATETIME NOT NULL,
-tforum CHAR(60) NOT NULL,
+tforum CHAR(30) NOT NULL,
 tisClosed BOOL NOT NULL,
-tisDeleted BOOL DEFAULT false,
+tisDeleted BOOL NOT NULL DEFAULT false,
 tmessage TEXT NOT NULL,
 tslug TEXT NOT NULL,
 ttitle TEXT NOT NULL,
 tuser CHAR(30) NOT NULL,
-tlikes INT DEFAULT 0,
-tdislikes INT DEFAULT 0,
-tpoints INT DEFAULT 0,
-tposts INT DEFAULT 0,
+tlikes INT NOT NULL DEFAULT 0,
+tdislikes INT NOT NULL DEFAULT 0,
+tpoints INT NOT NULL DEFAULT 0,
+tposts INT NOT NULL DEFAULT 0,
 FOREIGN KEY (tuser) REFERENCES users(uemail) ON DELETE CASCADE,
 FOREIGN KEY (tforum) REFERENCES forums(fshort_name) ON DELETE CASCADE
 )
@@ -69,12 +69,12 @@ pdate DATETIME NOT NULL,
 pthread INT NOT NULL,
 pmessage TEXT NOT NULL,
 puser CHAR(30) NOT NULL,
-pforum CHAR(60) NOT NULL,
+pforum CHAR(30) NOT NULL,
 plikes INT NOT NULL DEFAULT 0,
 pdislikes INT NOT NULL DEFAULT 0,
 ppoints INT NOT NULL DEFAULT 0,
 puser_id INT NOT NULL,
-puser_name CHAR(60),
+puser_name CHAR(50) NOT NULL DEFAULT '',
 FOREIGN KEY (puser) REFERENCES users(uemail) ON DELETE CASCADE,
 FOREIGN KEY (pthread) REFERENCES threads(tid) ON DELETE CASCADE,
 FOREIGN KEY (pforum) REFERENCES forums(fshort_name) ON DELETE CASCADE
@@ -105,7 +105,7 @@ CREATE PROCEDURE posts_insert_before(
  IN thread INT,
  IN message TEXT,
  IN user CHAR(30),
- IN forum CHAR(60)
+ IN forum CHAR(30)
 )
 BEGIN
  DECLARE l0 INT;
@@ -123,7 +123,7 @@ BEGIN
  DECLARE l11 INT;
  DECLARE next_id INT;
  DECLARE user_id INT;
- DECLARE user_name CHAR(60);
+ DECLARE user_name CHAR(50);
  SELECT uid, uname INTO user_id, user_name FROM users WHERE uemail = user;
  SET next_id = (SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='posts');
  IF parent IS NULL THEN
@@ -169,7 +169,8 @@ CREATE TABLE subscriptions
  sid INT(6) NOT NULL AUTO_INCREMENT PRIMARY KEY,
  suser CHAR(30) NOT NULL,
  sthread INT NOT NULL
-);
+)
+ENGINE=MyISAM;
 CREATE INDEX sthread ON  subscriptions(sthread);
 CREATE INDEX suserSthread ON subscriptions(suser, sthread);
 
@@ -180,7 +181,8 @@ firstUser CHAR(30) NOT NULL,
 secondUser CHAR(30) NOT NULL,
 firstUser_id INT NOT NULL,
 secondUser_id INT NOT NULL
-);
+)
+ENGINE=MyISAM;
 CREATE INDEX firstSecondUser ON followers(firstUser_id, secondUser_id);
 CREATE INDEX secondFirstUser ON followers(secondUser_id, firstUser_id);
 CREATE INDEX firstSecond ON followers(firstUser, secondUser);
@@ -212,14 +214,14 @@ FOR EACH ROW
 BEGIN
   UPDATE posts SET puser_name = NEW.uname WHERE puser_id = NEW.uid;
 END//
-       
+
 DELIMITER //
 CREATE PROCEDURE votePost (IN post INT,IN vote BOOL)
 BEGIN
  IF vote THEN
   UPDATE posts SET plikes = plikes + 1, ppoints = ppoints + 1 WHERE posts.pid = post LIMIT 1;
  ELSE
-  UPDATE posts SET pdislikes = pdislikes + 1, ppoints = ppoints - 1 WHERE posts.pid = post; 
+  UPDATE posts SET pdislikes = pdislikes + 1, ppoints = ppoints - 1 WHERE posts.pid = post;
  END IF;
   SELECT pparent, pisApproved, pisHighlighted, pisEdited, pisSpam, pisDeleted, pid, DATE_FORMAT(pdate, '%Y-%m-%d %H:%i:%s') AS pdate, pthread, pmessage, puser, pforum, plikes, pdislikes, ppoints
   FROM posts WHERE pid = post;
@@ -229,7 +231,7 @@ DELIMITER //
 CREATE PROCEDURE voteThread (IN thread INT,IN vote BOOL)
 BEGIN
  IF vote THEN
-  UPDATE threads SET tlikes = tlikes + 1, tpoints = tpoints + 1 WHERE tid = thread; 
+  UPDATE threads SET tlikes = tlikes + 1, tpoints = tpoints + 1 WHERE tid = thread;
  ELSE
   UPDATE threads SET tdislikes = tdislikes + 1, tpoints = tpoints - 1 WHERE tid = thread;
  END IF;
